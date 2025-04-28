@@ -10,6 +10,9 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(upload.none()) // đọc body req khi dùng form-data
 databaseService.connect()
+app.get('/', (req, res) => {
+  res.send('helo')
+})
 
 app.use('/user', usersRouter)
 
