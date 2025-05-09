@@ -33,6 +33,9 @@ class UsersService {
     )
     const userId = resuilt.insertedId.toString()
     const [accessToken, refreshToken] = await Promise.all([this.signAccessToken(userId), this.signRefreshToken(userId)])
+    // tương tự như vậy
+    //     const accessToken = await this.signAccessToken(userId)
+    // const refreshToken = await this.signRefreshToken(userId)
 
     await databaseService.refreshTokens.insertOne(
       new RefreshToken({ token: refreshToken, user_id: new ObjectId(userId) })

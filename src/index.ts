@@ -19,7 +19,7 @@ app.get('/', (req, res) => {
 app.use('/user', usersRouter)
 
 // err handler middleware sử dụng để bắt lỗi từ các middleware khác
-app.use(defaultErrorHandler)
+app.use(defaultErrorHandler as express.ErrorRequestHandler)
 
 app.listen(port, () => {
   console.log('dang chay tren cong : ' + port)

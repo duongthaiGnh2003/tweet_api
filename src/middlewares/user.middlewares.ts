@@ -6,35 +6,6 @@ import databaseService from '~/services/database.services'
 import { hasPassword } from '~/utils/crypto'
 import { validate } from '~/utils/validator'
 
-export const loginValidator = validate(
-  checkSchema({
-    email: {
-      isEmail: { errorMessage: USER_MESSAGE.EMAIL_IS_INVALID },
-      trim: true,
-      custom: {
-        options: async (value, { req }) => {
-          const user = await databaseService.users.findOne({ email: value, password: hasPassword(req.body.password) })
-          if (!user) {
-            throw new Error('email or password is incorrect')
-          }
-          req.user = user // sau khi kiem tra xong thi gan user vao req.user de dung chong controller
-          return true
-        }
-      }
-    },
-    password: {
-      notEmpty: { errorMessage: USER_MESSAGE.PASSWORD_IS_REQUIRED },
-      isString: true,
-      isLength: {
-        options: {
-          min: 7,
-          max: 50
-        }
-      }
-    }
-  })
-)
-
 export const registerValidator = validate(
   checkSchema({
     name: {
@@ -97,6 +68,35 @@ export const registerValidator = validate(
         options: {
           strict: true,
           strictSeparator: true
+        }
+      }
+    }
+  })
+)
+
+export const loginValidator = validate(
+  checkSchema({
+    email: {
+      isEmail: { errorMessage: USER_MESSAGE.EMAIL_IS_INVALID },
+      trim: true,
+      custom: {
+        options: async (value, { req }) => {
+          const user = await databaseService.users.findOne({ email: value, password: hasPassword(req.body.password) })
+          if (!user) {
+            throw new Error('email or password is incorrect')
+          }
+          req.user = user // sau khi kiem tra xong thi gan user vao req.user de dung chong controller
+          return true
+        }
+      }
+    },
+    password: {
+      notEmpty: { errorMessage: USER_MESSAGE.PASSWORD_IS_REQUIRED },
+      isString: true,
+      isLength: {
+        options: {
+          min: 7,
+          max: 50
         }
       }
     }

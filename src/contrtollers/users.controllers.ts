@@ -4,6 +4,18 @@ import usersService from '~/services/user.services'
 import { ParamsDictionary } from 'express-serve-static-core'
 import { User } from '~/models/schemas/User.schema'
 
+export async function registerController(
+  req: Request<ParamsDictionary, any, registerRequestBody>,
+  res: Response,
+  next: NextFunction
+) {
+  const result = await usersService.register(req.body)
+  res.json({
+    data: 'create success',
+    result: result
+  })
+}
+
 export const loginController = async (req: Request, res: Response) => {
   const { user } = req as { user: User } // req.user được gán trong middleware
   try {
@@ -18,15 +30,4 @@ export const loginController = async (req: Request, res: Response) => {
       error: error
     })
   }
-}
-export async function registerController(
-  req: Request<ParamsDictionary, any, registerRequestBody>,
-  res: Response,
-  next: NextFunction
-) {
-  const result = await usersService.register(req.body)
-  res.json({
-    data: 'create success',
-    result: result
-  })
 }
