@@ -5,6 +5,8 @@ import { hasPassword } from '~/utils/crypto'
 import { signToken } from '~/utils/jwt'
 import { TokenType } from '~/constants/enums'
 import { SignOptions } from 'jsonwebtoken'
+import { ObjectId } from 'mongodb'
+import RefreshToken from '~/models/schemas/RefreshToken.schema'
 
 class UsersService {
   private signAccessToken(userId: string) {
@@ -31,6 +33,20 @@ class UsersService {
     )
     const userId = resuilt.insertedId.toString()
     const [accessToken, refreshToken] = await Promise.all([this.signAccessToken(userId), this.signRefreshToken(userId)])
+
+    await databaseService.refreshTokens.insertOne(
+      new RefreshToken({ token: refreshToken, user_id: new ObjectId(userId) })
+    )
+
+    return { accessToken, refreshToken }
+  }
+
+  async login(userId: string) {
+    const [accessToken, refreshToken] = await Promise.all([this.signAccessToken(userId), this.signRefreshToken(userId)])
+    // delete old refresh token and insert new one
+    await databaseService.refreshTokens.insertOne(
+      new RefreshToken({ token: refreshToken, user_id: new ObjectId(userId) })
+    )
 
     return { accessToken, refreshToken }
   }

@@ -6,5 +6,6 @@ export const USER_MESSAGE = {
   EMAIL_IS_REQUIRED: 'Email is required',
   EMAIL_ALREADY_EXISTS: 'Email already exists',
   EMAIL_IS_INVALID: 'Email is invalid',
-  PASSWORD_IS_REQUIRED: 'Password is required'
+  PASSWORD_IS_REQUIRED: 'Password is required',
+  USER_NOT_FOUND: 'User not found'
 } as const
