@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken'
+import { resolve } from 'path'
 
 export const signToken = ({
   payload,
@@ -17,6 +18,24 @@ export const signToken = ({
         throw reject(error)
       }
       resolve(token as string)
+    })
+  })
+}
+
+// kiem tra token có hợp lệ hay không
+export const verifyToken = ({
+  token,
+  secretOrPublicKey = process.env.JWT_SECRET as string
+}: {
+  token: string
+  secretOrPublicKey?: string
+}) => {
+  return new Promise<jwt.JwtPayload>((resolve, reject) => {
+    jwt.verify(token, secretOrPublicKey, (error, decoded) => {
+      if (error) {
+        return reject(error)
+      }
+      resolve(decoded as jwt.JwtPayload)
     })
   })
 }

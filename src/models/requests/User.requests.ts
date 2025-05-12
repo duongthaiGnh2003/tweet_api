@@ -5,3 +5,7 @@ export type registerRequestBody = {
   confirm_password: string
   date_of_birth: string
 }
+
+export type LogoutRequestBody = {
+  refresh_token: string
+}
