@@ -1,8 +1,11 @@
 import { NextFunction, Request, Response } from 'express'
-import { LogoutRequestBody, registerRequestBody } from '~/models/requests/User.requests'
+import { LogoutRequestBody, registerRequestBody, TokenPayload } from '~/models/requests/User.requests'
 import usersService from '~/services/user.services'
 import { ParamsDictionary } from 'express-serve-static-core'
 import { User } from '~/models/schemas/User.schema'
+import HTTP_STATUS from '~/constants/httpstatus'
+import databaseService from '~/services/database.services'
+import { ObjectId } from 'mongodb'
 
 export async function registerController(
   req: Request<ParamsDictionary, any, registerRequestBody>,
@@ -46,4 +49,23 @@ export const refreshTokenController = async (req: Request, res: Response) => {
   res.json({
     data: result
   })
+}
+
+export const verifyEmailController = async (req: Request, res: Response) => {
+  const { userId } = req.decoded_email_verify_token as TokenPayload
+
+  const user = await databaseService.users.findOne({ _id: new ObjectId(userId) })
+  // neu user_id khong ton tai
+
+  if (!user) {
+    return res.status(HTTP_STATUS.NOT_FOUND).json({ message: 'User not found' })
+  }
+
+  // // user da xac thuc email
+  if (user.email_verify_token === '') {
+    return res.json({ message: 'Email already verified' })
+  }
+
+  // // khi user chua xac thuc email
+  await usersService.verifyEmail(userId)
 }
