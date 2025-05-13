@@ -1,15 +1,20 @@
 import { verify } from 'crypto'
 import { Router } from 'express'
 import {
+  forgotPasswordController,
+  forgotPasswordVerifyController,
   loginController,
   logoutController,
   refreshTokenController,
   registerController,
+  reSendVerifyEmailController,
   verifyEmailController
 } from '~/contrtollers/users.controllers'
 import {
   accessTokenValidator,
   emailVerifyTokenValidator,
+  forgotPasswordValidator,
+  forgotPasswordVerifyValidator,
   loginValidator,
   refreshTokenValidator,
   registerValidator
@@ -24,5 +29,12 @@ usersRouter.post('/logout', accessTokenValidator, refreshTokenValidator, wrapReq
 usersRouter.post('/refresh-token', refreshTokenValidator, wrapRequestHandler(refreshTokenController))
 
 usersRouter.post('/verify-email', emailVerifyTokenValidator, wrapRequestHandler(verifyEmailController))
+usersRouter.post('/resend-verify-email', accessTokenValidator, wrapRequestHandler(reSendVerifyEmailController))
+usersRouter.post('/forgot-password', forgotPasswordValidator, wrapRequestHandler(forgotPasswordController))
+usersRouter.post(
+  '/verify-forgot-password-token',
+  forgotPasswordVerifyValidator,
+  wrapRequestHandler(forgotPasswordVerifyController)
+)
 
 export default usersRouter
