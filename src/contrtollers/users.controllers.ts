@@ -58,14 +58,19 @@ export const verifyEmailController = async (req: Request, res: Response) => {
   // neu user_id khong ton tai
 
   if (!user) {
-    return res.status(HTTP_STATUS.NOT_FOUND).json({ message: 'User not found' })
+    res.status(HTTP_STATUS.NOT_FOUND).json({ message: 'User not found' })
+    return
   }
 
   // // user da xac thuc email
   if (user.email_verify_token === '') {
-    return res.json({ message: 'Email already verified' })
+    res.json({ message: 'Email already verified' })
+    return
   }
 
   // // khi user chua xac thuc email
-  await usersService.verifyEmail(userId)
+  const result = await usersService.verifyEmail(userId)
+  res.json({
+    result
+  })
 }
