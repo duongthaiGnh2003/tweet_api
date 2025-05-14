@@ -7,6 +7,9 @@ import { TokenType, UserVerifyStatus } from '~/constants/enums'
 import { SignOptions } from 'jsonwebtoken'
 import { ObjectId } from 'mongodb'
 import RefreshToken from '~/models/schemas/RefreshToken.schema'
+import { ErrorWithStatus } from '~/models/Errors'
+import HTTP_STATUS from '~/constants/httpstatus'
+import { USER_MESSAGE } from '~/constants/message'
 
 class UsersService {
   private signAccessToken(userId: string) {
@@ -156,6 +159,27 @@ class UsersService {
       { $set: { password: hasPassword(password), forgot_password_token: '', updated_at: new Date() } }
     )
     return { message: 'Reset password successfully' }
+  }
+
+  async getMe(userId: string) {
+    const user = await databaseService.users.findOne(
+      { _id: new ObjectId(userId) },
+      {
+        projection: {
+          password: 0,
+          email_verify_token: 0,
+          forgot_password_token: 0
+        }
+      }
+    )
+    // neu user_id khong ton tai
+    if (!user) {
+      throw new ErrorWithStatus({
+        message: USER_MESSAGE.USER_NOT_FOUND,
+        status: HTTP_STATUS.NOT_FOUND
+      })
+    }
+    return user
   }
 }
 

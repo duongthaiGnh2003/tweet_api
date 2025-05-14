@@ -13,6 +13,7 @@ import databaseService from '~/services/database.services'
 import { ObjectId } from 'mongodb'
 import { USER_MESSAGE } from '~/constants/message'
 import { UserVerifyStatus } from '~/constants/enums'
+import { omit } from 'lodash'
 
 export async function registerController(
   req: Request<ParamsDictionary, any, registerRequestBody>,
@@ -129,5 +130,15 @@ export const resetPasswordController = async (req: Request, res: Response) => {
   const result = await usersService.resetPasswordService(userId, req.body.password)
   res.json({
     result
+  })
+}
+
+export const getMeController = async (req: Request, res: Response) => {
+  const { userId } = req.decoded_authorization as TokenPayload
+
+  const result = await usersService.getMe(userId)
+
+  res.json({
+    data: result
   })
 }
