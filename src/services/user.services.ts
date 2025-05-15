@@ -52,6 +52,7 @@ class UsersService {
       new User({
         ...payload,
         _id: user_id,
+        username: `user_${user_id.toString()}`,
         date_of_birth: new Date(payload.date_of_birth),
         password: hasPassword(payload.password),
         email_verify_token: emailVerifyToken
@@ -198,6 +199,29 @@ class UsersService {
         }
       }
     )
+    return user
+  }
+
+  async getProfileUserService(username: string) {
+    const user = await databaseService.users.findOne(
+      {
+        username
+      },
+      {
+        projection: {
+          password: 0,
+          email_verify_token: 0,
+          forgot_password_token: 0
+        }
+      }
+    )
+    if (!user) {
+      throw new ErrorWithStatus({
+        message: USER_MESSAGE.USER_NOT_FOUND,
+        status: HTTP_STATUS.NOT_FOUND
+      })
+      return
+    }
     return user
   }
 }

@@ -163,3 +163,12 @@ export const updateMeController = async (req: Request<ParamsDictionary, any, upd
     data: result
   })
 }
+
+export const getProfileUserController = async (req: Request, res: Response) => {
+  const { username } = req.params
+  const result = await usersService.getProfileUserService(username)
+
+  res.json({
+    data: result
+  })
+}

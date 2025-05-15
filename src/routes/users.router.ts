@@ -4,6 +4,7 @@ import {
   forgotPasswordController,
   forgotPasswordVerifyController,
   getMeController,
+  getProfileUserController,
   loginController,
   logoutController,
   refreshTokenController,
@@ -52,5 +53,7 @@ usersRouter.patch(
   updateMeValidator,
   wrapRequestHandler(updateMeController)
 )
+
+usersRouter.get('/:username', wrapRequestHandler(getProfileUserController))
 
 export default usersRouter
