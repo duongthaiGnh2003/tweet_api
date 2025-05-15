@@ -1,6 +1,7 @@
 import { verify } from 'crypto'
 import { Router } from 'express'
 import {
+  followUserController,
   forgotPasswordController,
   forgotPasswordVerifyController,
   getMeController,
@@ -56,4 +57,10 @@ usersRouter.patch(
 
 usersRouter.get('/:username', wrapRequestHandler(getProfileUserController))
 
+usersRouter.patch(
+  '/follow/:follow_User_Id',
+  accessTokenValidator,
+  verifyUserValidator,
+  wrapRequestHandler(followUserController)
+)
 export default usersRouter

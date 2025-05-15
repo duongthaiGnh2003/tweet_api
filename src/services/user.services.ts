@@ -10,6 +10,7 @@ import RefreshToken from '~/models/schemas/RefreshToken.schema'
 import { ErrorWithStatus } from '~/models/Errors'
 import HTTP_STATUS from '~/constants/httpstatus'
 import { USER_MESSAGE } from '~/constants/message'
+import Follower from '~/models/schemas/Follower.schema'
 
 class UsersService {
   private signAccessToken({ userId, verify }: { userId: string; verify: UserVerifyStatus }) {
@@ -223,6 +224,34 @@ class UsersService {
       return
     }
     return user
+  }
+  async followUserService(userId: string, followerUserId: string) {
+    const user = await databaseService.users.findOne({ _id: new ObjectId(followerUserId) })
+    if (!user) {
+      throw new ErrorWithStatus({
+        message: USER_MESSAGE.USER_NOT_FOUND,
+        status: HTTP_STATUS.NOT_FOUND
+      })
+    }
+    const follower = await databaseService.followers.findOne({
+      user_id: new ObjectId(userId),
+      follower_user_id: new ObjectId(followerUserId)
+    })
+    if (follower) {
+      await databaseService.followers.deleteOne({
+        user_id: new ObjectId(userId),
+        follower_user_id: new ObjectId(followerUserId)
+      })
+      return { message: 'Unfollow user successfully' }
+    } else {
+      await databaseService.followers.insertOne(
+        new Follower({
+          user_id: new ObjectId(userId),
+          follower_user_id: new ObjectId(followerUserId)
+        })
+      )
+      return { message: 'Follow user successfully' }
+    }
   }
 }
 

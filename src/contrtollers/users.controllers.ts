@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express'
 import {
+  followAndUnfollowRequestParams,
   ForgotPasswordRequestBody,
   LogoutRequestBody,
   registerRequestBody,
@@ -170,5 +171,16 @@ export const getProfileUserController = async (req: Request, res: Response) => {
 
   res.json({
     data: result
+  })
+}
+
+export const followUserController = async (req: Request<followAndUnfollowRequestParams>, res: Response) => {
+  const { userId } = req.decoded_authorization as TokenPayload
+  const { follow_User_Id } = req.params as followAndUnfollowRequestParams
+
+  const result = await usersService.followUserService(userId, follow_User_Id)
+
+  res.json({
+    ...result
   })
 }
