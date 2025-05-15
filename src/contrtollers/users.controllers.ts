@@ -3,7 +3,8 @@ import {
   ForgotPasswordRequestBody,
   LogoutRequestBody,
   registerRequestBody,
-  TokenPayload
+  TokenPayload,
+  updateMeRequestBody
 } from '~/models/requests/User.requests'
 import usersService from '~/services/user.services'
 import { ParamsDictionary } from 'express-serve-static-core'
@@ -13,7 +14,7 @@ import databaseService from '~/services/database.services'
 import { ObjectId } from 'mongodb'
 import { USER_MESSAGE } from '~/constants/message'
 import { UserVerifyStatus } from '~/constants/enums'
-import { omit } from 'lodash'
+import { pick } from 'lodash'
 
 export async function registerController(
   req: Request<ParamsDictionary, any, registerRequestBody>,
@@ -31,7 +32,7 @@ export const loginController = async (req: Request, res: Response) => {
   const { user } = req as { user: User } // req.user được gán trong middleware
 
   try {
-    const result = await usersService.login(user._id.toString())
+    const result = await usersService.login({ userId: user._id.toString(), verify: user.verify })
     res.json({
       message: 'login success',
       data: result
@@ -139,6 +140,26 @@ export const getMeController = async (req: Request, res: Response) => {
   const result = await usersService.getMe(userId)
 
   res.json({
+    data: result
+  })
+}
+
+export const updateMeController = async (req: Request<ParamsDictionary, any, updateMeRequestBody>, res: Response) => {
+  const { userId } = req.decoded_authorization as TokenPayload
+  const body = pick(req.body, [
+    'name',
+    'date_of_birth',
+    'bio',
+    'website',
+    'location',
+    'username',
+    'avatar',
+    'cover_photo'
+  ]) // chỉ lấy các trường cần thiết trong body cho dù user gửi lên những trường khác
+  const result = await usersService.updateMe(userId, body as Partial<updateMeRequestBody>)
+
+  res.json({
+    message: 'update success',
     data: result
   })
 }

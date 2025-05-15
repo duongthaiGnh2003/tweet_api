@@ -21,3 +21,14 @@ export interface TokenPayload extends JwtPayload {
 export type ForgotPasswordRequestBody = {
   email: string
 }
+
+export type updateMeRequestBody = {
+  name?: string
+  date_of_birth?: string
+  bio?: string
+  website?: string
+  location?: string
+  username?: string
+  avatar?: string
+  cover_photo?: string
+}

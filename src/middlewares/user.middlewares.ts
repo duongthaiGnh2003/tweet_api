@@ -1,11 +1,12 @@
 import { NextFunction, Request, Response } from 'express'
 import { checkSchema, ParamSchema } from 'express-validator'
 import { JsonWebTokenError } from 'jsonwebtoken'
-import { values } from 'lodash'
 import { ObjectId } from 'mongodb'
+import { UserVerifyStatus } from '~/constants/enums'
 import HTTP_STATUS from '~/constants/httpstatus'
 import { USER_MESSAGE } from '~/constants/message'
 import { ErrorWithStatus } from '~/models/Errors'
+import { TokenPayload } from '~/models/requests/User.requests'
 import databaseService from '~/services/database.services'
 import { hasPassword } from '~/utils/crypto'
 import { verifyToken } from '~/utils/jwt'
@@ -84,21 +85,44 @@ const forgotPasswordTokenSchema: ParamSchema = {
   }
 }
 
+const nameSchema: ParamSchema = {
+  notEmpty: { errorMessage: USER_MESSAGE.NAME_IS_REQUIRED },
+  isString: { errorMessage: USER_MESSAGE.NAME_MUST_BE_STRING },
+  isLength: {
+    options: {
+      min: 1,
+      max: 100
+    }
+  },
+  trim: true,
+  errorMessage: USER_MESSAGE.NAME_LENGTH_MUST_BE_BETWEEN_1_AND_100
+}
+const dayOfBirthSchema: ParamSchema = {
+  isISO8601: {
+    options: {
+      strict: true,
+      strictSeparator: true
+    }
+  }
+}
+
+const imgSchema: ParamSchema = {
+  isString: { errorMessage: 'img must be a string' },
+  optional: true,
+  trim: true,
+  isLength: {
+    options: {
+      min: 1,
+      max: 400
+    },
+    errorMessage: 'img length must be between 1 and 400 characters'
+  }
+}
+
 export const registerValidator = validate(
   checkSchema(
     {
-      name: {
-        notEmpty: { errorMessage: USER_MESSAGE.NAME_IS_REQUIRED },
-        isString: { errorMessage: USER_MESSAGE.NAME_MUST_BE_STRING },
-        isLength: {
-          options: {
-            min: 1,
-            max: 100
-          }
-        },
-        trim: true,
-        errorMessage: USER_MESSAGE.NAME_LENGTH_MUST_BE_BETWEEN_1_AND_100
-      },
+      name: nameSchema,
       email: {
         notEmpty: { errorMessage: USER_MESSAGE.EMAIL_IS_REQUIRED },
         isEmail: true,
@@ -116,14 +140,7 @@ export const registerValidator = validate(
       },
       password: passwordSchema,
       confirm_password: confirmPasswordSchema,
-      day_of_birth: {
-        isISO8601: {
-          options: {
-            strict: true,
-            strictSeparator: true
-          }
-        }
-      }
+      day_of_birth: dayOfBirthSchema
     },
     ['body']
   ) //chỉ check body không check query hay params
@@ -282,6 +299,89 @@ export const resetPasswordValidator = validate(
       password: passwordSchema,
       confirm_password: confirmPasswordSchema,
       forgot_password_token: forgotPasswordTokenSchema
+    },
+    ['body']
+  )
+)
+
+export const verifyUserValidator = (req: Request, res: Response, next: NextFunction) => {
+  const { verify } = req.decoded_authorization as TokenPayload
+
+  if (verify !== UserVerifyStatus.Verified) {
+    return next(
+      new ErrorWithStatus({
+        message: 'user is not verified',
+        status: HTTP_STATUS.FORBIDDEN
+      })
+    )
+  }
+
+  next()
+}
+
+export const updateMeValidator = validate(
+  checkSchema(
+    {
+      name: {
+        ...nameSchema,
+        optional: true,
+        notEmpty: undefined
+      },
+
+      date_of_birth: {
+        ...dayOfBirthSchema,
+        optional: true
+      },
+      bio: {
+        isString: { errorMessage: 'Bio must be a string' },
+        optional: true,
+        trim: true,
+        isLength: {
+          options: {
+            min: 1,
+            max: 200
+          },
+          errorMessage: 'Bio length must be between 1 and 200 characters'
+        }
+      },
+      website: {
+        isString: { errorMessage: 'Website must be a string' },
+        optional: true,
+        trim: true,
+        isLength: {
+          options: {
+            min: 1,
+            max: 200
+          },
+          errorMessage: 'Website length must be between 1 and 200 characters'
+        }
+      },
+      location: {
+        isString: { errorMessage: 'Location must be a string' },
+        optional: true,
+        trim: true,
+        isLength: {
+          options: {
+            min: 1,
+            max: 200
+          },
+          errorMessage: 'Location length must be between 1 and 200 characters'
+        }
+      },
+      username: {
+        isString: { errorMessage: 'Username must be a string' },
+        optional: true,
+        trim: true,
+        isLength: {
+          options: {
+            min: 1,
+            max: 200
+          },
+          errorMessage: 'Username length must be between 1 and 200 characters'
+        }
+      },
+      avatar: imgSchema,
+      cover_photo: imgSchema
     },
     ['body']
   )

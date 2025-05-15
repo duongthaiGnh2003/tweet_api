@@ -1,6 +1,6 @@
 import { User } from '~/models/schemas/User.schema'
 import databaseService from './database.services'
-import { registerRequestBody } from '~/models/requests/User.requests'
+import { registerRequestBody, updateMeRequestBody } from '~/models/requests/User.requests'
 import { hasPassword } from '~/utils/crypto'
 import { signToken, verifyToken } from '~/utils/jwt'
 import { TokenType, UserVerifyStatus } from '~/constants/enums'
@@ -12,17 +12,17 @@ import HTTP_STATUS from '~/constants/httpstatus'
 import { USER_MESSAGE } from '~/constants/message'
 
 class UsersService {
-  private signAccessToken(userId: string) {
+  private signAccessToken({ userId, verify }: { userId: string; verify: UserVerifyStatus }) {
     return signToken({
-      payload: { userId, token_type: TokenType.AccessToken },
+      payload: { userId, verify, token_type: TokenType.AccessToken },
       options: { expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN as SignOptions['expiresIn'] },
       privateKey: process.env.JWT_SECRET_ACCESS_TOKEN as string
     })
   }
 
-  private signRefreshToken(userId: string) {
+  private signRefreshToken({ userId, verify }: { userId: string; verify: UserVerifyStatus }) {
     return signToken({
-      payload: { userId, token_type: TokenType.RefreshToken },
+      payload: { userId, verify, token_type: TokenType.RefreshToken },
       options: { expiresIn: process.env.REFESH_TOKEN_EXPIRES_IN as SignOptions['expiresIn'] },
       privateKey: process.env.JWT_SECRET_REFRESH_TOKEN as string
     })
@@ -59,12 +59,12 @@ class UsersService {
     )
 
     const [accessToken, refreshToken] = await Promise.all([
-      this.signAccessToken(user_id.toString()),
-      this.signRefreshToken(user_id.toString())
+      this.signAccessToken({ userId: user_id.toString(), verify: UserVerifyStatus.Unverified }),
+      this.signRefreshToken({ userId: user_id.toString(), verify: UserVerifyStatus.Unverified })
     ])
     // tương tự như vậy
-    //     const accessToken = await this.signAccessToken(userId)
-    // const refreshToken = await this.signRefreshToken(userId)
+    //     const accessToken = await this.signAccessToken({userId:user_id.toString(),verify:UserVerifyStatus.Unverified})
+    // const refreshToken = await this.signRefreshToken({userId:user_id.toString(),verify:UserVerifyStatus.Unverified})
 
     await databaseService.refreshTokens.insertOne(
       new RefreshToken({ token: refreshToken, user_id: new ObjectId(user_id.toString()) })
@@ -73,8 +73,11 @@ class UsersService {
     return { accessToken, refreshToken }
   }
 
-  async login(userId: string) {
-    const [accessToken, refreshToken] = await Promise.all([this.signAccessToken(userId), this.signRefreshToken(userId)])
+  async login({ userId, verify }: { userId: string; verify: UserVerifyStatus }) {
+    const [accessToken, refreshToken] = await Promise.all([
+      this.signAccessToken({ userId, verify }),
+      this.signRefreshToken({ userId, verify })
+    ])
     // delete old refresh token and insert new one
     await databaseService.refreshTokens.insertOne(
       new RefreshToken({ token: refreshToken, user_id: new ObjectId(userId) })
@@ -109,7 +112,7 @@ class UsersService {
         throw new Error('Refresh token không hợp lệ hoặc đã bị thu hồi')
       }
 
-      const newAccessToken = await this.signAccessToken(userId)
+      const newAccessToken = await this.signAccessToken({ userId, verify: payload.verify })
 
       // 5. Trả về token mới
       return {
@@ -126,8 +129,8 @@ class UsersService {
       { _id: new ObjectId(userId) },
       { $set: { email_verify_token: '', verify: UserVerifyStatus.Verified, updated_at: new Date() } }
     )
-    const accessToken = await this.signAccessToken(userId)
-    const refreshToken = await this.signRefreshToken(userId)
+    const accessToken = await this.signAccessToken({ userId, verify: UserVerifyStatus.Verified })
+    const refreshToken = await this.signRefreshToken({ userId, verify: UserVerifyStatus.Verified })
     await databaseService.refreshTokens.insertOne(
       new RefreshToken({ token: refreshToken, user_id: new ObjectId(userId) })
     )
@@ -179,6 +182,22 @@ class UsersService {
         status: HTTP_STATUS.NOT_FOUND
       })
     }
+    return user
+  }
+  async updateMe(userId: string, payload: updateMeRequestBody) {
+    const _payload = payload.date_of_birth ? { ...payload, date_of_birth: new Date(payload.date_of_birth) } : payload
+    const user = await databaseService.users.findOneAndUpdate(
+      { _id: new ObjectId(userId) },
+      { $set: { ...(_payload as updateMeRequestBody & { date_of_birth?: Date }), updated_at: new Date() } },
+      {
+        returnDocument: 'after',
+        projection: {
+          password: 0,
+          email_verify_token: 0,
+          forgot_password_token: 0
+        }
+      }
+    )
     return user
   }
 }

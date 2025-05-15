@@ -1,8 +1,9 @@
-import express, { NextFunction, Request, Response } from 'express'
+import express from 'express'
 import multer from 'multer'
 import usersRouter from './routes/users.router'
 import databaseService from './services/database.services'
 import defaultErrorHandler from './middlewares/error.middlewares'
+
 const port = 4000
 databaseService.connect() // kết nối database
 const app = express()
