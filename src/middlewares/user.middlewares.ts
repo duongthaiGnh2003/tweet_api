@@ -12,6 +12,9 @@ import { hasPassword } from '~/utils/crypto'
 import { verifyToken } from '~/utils/jwt'
 import { validate } from '~/utils/validator'
 
+// regex for username not start with number, only contain a-zA-Z0-9_ and length between 4 and 15
+export const REGEX_USERNAME = /^(?![0-9]+$)[A-Za-z0-9_]{4,15}$/
+
 const passwordSchema: ParamSchema = {
   notEmpty: true,
   isString: true,
@@ -372,12 +375,18 @@ export const updateMeValidator = validate(
         isString: { errorMessage: 'Username must be a string' },
         optional: true,
         trim: true,
-        isLength: {
-          options: {
-            min: 1,
-            max: 200
-          },
-          errorMessage: 'Username length must be between 1 and 200 characters'
+        custom: {
+          options: async (value, { req }) => {
+            if (!REGEX_USERNAME.test(value)) {
+              throw new Error(
+                'Username must be between 4 and 15 characters and can only contain letters, numbers, and underscores'
+              )
+            }
+            const user = await databaseService.users.findOne({ username: value })
+            if (user) {
+              throw new Error('Username already exists')
+            }
+          }
         }
       },
       avatar: imgSchema,
