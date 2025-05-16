@@ -253,6 +253,28 @@ class UsersService {
       return { message: 'Follow user successfully' }
     }
   }
+
+  async changePasswordService(userId: string, old_password: string, password: string) {
+    const user = await databaseService.users.findOne({ _id: new ObjectId(userId) })
+    if (!user) {
+      throw new ErrorWithStatus({
+        message: USER_MESSAGE.USER_NOT_FOUND,
+        status: HTTP_STATUS.NOT_FOUND
+      })
+    }
+    if (user.password !== hasPassword(old_password)) {
+      throw new ErrorWithStatus({
+        message: 'Old password is incorrect',
+        status: HTTP_STATUS.UNAUTHORIZED
+      })
+    }
+
+    await databaseService.users.findOneAndUpdate(
+      { _id: new ObjectId(userId) },
+      { $set: { password: hasPassword(password), updated_at: new Date() } }
+    )
+    return { message: 'Change password successfully' }
+  }
 }
 
 const usersService = new UsersService()

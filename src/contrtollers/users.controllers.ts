@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express'
 import {
+  changePasswordRequestBody,
   followAndUnfollowRequestParams,
   ForgotPasswordRequestBody,
   LogoutRequestBody,
@@ -183,4 +184,16 @@ export const followUserController = async (req: Request<followAndUnfollowRequest
   res.json({
     ...result
   })
+}
+
+export const changePasswordController = async (
+  req: Request<ParamsDictionary, any, changePasswordRequestBody>,
+  res: Response
+) => {
+  const { userId } = req.decoded_authorization as TokenPayload
+  const { password, old_password } = req.body
+
+  const result = await usersService.changePasswordService(userId, old_password, password)
+
+  res.json({ ...result })
 }

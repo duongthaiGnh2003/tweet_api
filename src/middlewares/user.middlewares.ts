@@ -395,3 +395,11 @@ export const updateMeValidator = validate(
     ['body']
   )
 )
+
+export const changePasswordValidator = validate(
+  checkSchema({
+    old_password: passwordSchema,
+    password: passwordSchema, // new password
+    confirm_new_password: confirmPasswordSchema
+  })
+)

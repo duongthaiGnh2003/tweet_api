@@ -37,3 +37,9 @@ export type updateMeRequestBody = {
 export interface followAndUnfollowRequestParams extends ParamsDictionary {
   follow_User_Id: string
 }
+
+export type changePasswordRequestBody = {
+  old_password: string
+  password: string
+  confirm_new_password: string
+}
