@@ -9,6 +9,7 @@ import {
   getProfileUserController,
   loginController,
   logoutController,
+  oauthController,
   refreshTokenController,
   registerController,
   reSendVerifyEmailController,
@@ -73,5 +74,7 @@ usersRouter.patch(
   changePasswordValidator,
   wrapRequestHandler(changePasswordController)
 )
+
+usersRouter.get('/oauth/google', wrapRequestHandler(oauthController))
 
 export default usersRouter

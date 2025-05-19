@@ -17,7 +17,7 @@ app.get('/', (req, res) => {
   res.send('Hello, World!')
 })
 
-app.use('/user', usersRouter)
+app.use('/users', usersRouter)
 
 // err handler middleware sử dụng để bắt lỗi từ các middleware khác
 app.use(defaultErrorHandler as express.ErrorRequestHandler)

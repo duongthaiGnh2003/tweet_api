@@ -197,3 +197,13 @@ export const changePasswordController = async (
 
   res.json({ ...result })
 }
+
+export const oauthController = async (req: Request, res: Response) => {
+  const { code } = req.query
+
+  const result = await usersService.oauthService(code as string)
+  const clientUrl = process.env.CLIENT_REDIRECT_URI as string
+  const redirectUrl = `${clientUrl}?access_token=${result.accessToken}&refresh_token=${result.refreshToken}&new_user=${result.newUser}&verify=${result.verify}`
+
+  res.redirect(redirectUrl)
+}
