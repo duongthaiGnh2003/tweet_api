@@ -1,16 +1,15 @@
 import { Request } from 'express'
-import formidable from 'formidable'
+import formidable, { File } from 'formidable'
 
 import path from 'path'
 
 export const handleUploadSingleImage = async (req: Request) => {
   const form = formidable({
-    uploadDir: path.resolve('uploads'),
+    uploadDir: path.resolve('uploads/temp'),
     maxFields: 1,
     keepExtensions: true,
     maxFieldsSize: 3 * 1024 * 1024, // 3MB
     filter: function ({ name, originalFilename, mimetype }) {
-      console.log('file', { name, originalFilename, mimetype })
       const valid = name === 'image' && Boolean(mimetype?.includes('image/'))
       if (!valid) {
         form.emit('error' as any, new Error('Unsupported file type') as any)
@@ -18,7 +17,7 @@ export const handleUploadSingleImage = async (req: Request) => {
       return valid
     }
   })
-  return new Promise((resolve, reject) => {
+  return new Promise<File>((resolve, reject) => {
     form.parse(req, (err, fields, files) => {
       if (err) {
         return reject(err)
@@ -27,7 +26,13 @@ export const handleUploadSingleImage = async (req: Request) => {
       if (!Boolean(files?.image)) {
         return reject(new Error('file is empty'))
       }
-      resolve(files)
+      resolve((files?.image as File[])[0])
     })
   })
+}
+
+export const getNameFromFullName = (fullName: string) => {
+  const namearr = fullName.split('.')
+  namearr.pop()
+  return namearr.join('')
 }

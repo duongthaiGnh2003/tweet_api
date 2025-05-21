@@ -5,7 +5,7 @@ import databaseService from './services/database.services'
 import defaultErrorHandler from './middlewares/error.middlewares'
 import { mediasRouter } from './routes/media.route'
 
-const port = 4000
+const port = process.env.PORT
 databaseService.connect() // kết nối database
 const app = express()
 const upload = multer()
@@ -20,7 +20,7 @@ app.get('/', (req, res) => {
 
 app.use('/users', usersRouter)
 app.use('/medias', mediasRouter)
-
+console.log(process.argv)
 // err handler middleware sử dụng để bắt lỗi từ các middleware khác
 app.use(defaultErrorHandler as express.ErrorRequestHandler)
 
