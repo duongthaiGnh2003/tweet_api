@@ -1,20 +1,45 @@
 import { Request } from 'express'
 import path from 'path'
 import sharp from 'sharp'
-import { DIR_UPLOADS_PATH, isProduction } from '~/constants/config'
-import { getNameFromFullName, handleUploadSingleImage } from '~/utils/file'
+import { DIR_UPLOADS_IMAGE, DIR_UPLOADS_VIDEO, isProduction } from '~/constants/config'
+import { getNameFromFullName, handleUploadImage, handleUploadVideo } from '~/utils/file'
 
 class MediaService {
   async uploadMedia(req: Request) {
-    const file = await handleUploadSingleImage(req)
-    const newName = getNameFromFullName(file.newFilename)
-    const info = await sharp(file.filepath)
-      .jpeg({ quality: 70 })
-      .toFile(DIR_UPLOADS_PATH + `/${newName}.jpg`)
+    const files = await handleUploadImage(req)
 
-    return isProduction
-      ? `${process.env.HOST}/uploads/${newName}.jpg`
-      : `http://localhost:${process.env.PORT}/static/image/${newName}.jpg`
+    const data = await Promise.all(
+      files.map(async (file, index) => {
+        const newName = getNameFromFullName(file.newFilename)
+
+        await sharp(file.filepath)
+          .jpeg()
+          .toFile(DIR_UPLOADS_IMAGE + `/${newName}.jpg`)
+
+        return isProduction
+          ? `${process.env.HOST}/static/image/${newName}.jpg`
+          : `http://localhost:${process.env.PORT}/static/image/${newName}.jpg`
+      })
+    )
+
+    return data
+  }
+  async uploadVideo(req: Request) {
+    const files = await handleUploadVideo(req)
+
+    const data = await Promise.all(
+      files.map(async (file, index) => {
+        // await sharp(file.filepath)
+        //   .jpeg()
+        //   .toFile(DIR_UPLOADS_VIDEO + `/${newName}.mp4`)
+
+        return isProduction
+          ? `${process.env.HOST}/static/video/${file.newFilename}.mp4`
+          : `http://localhost:${process.env.PORT}/static/video/${file.newFilename}.mp4`
+      })
+    )
+
+    return data
   }
 }
 const mediaService = new MediaService()
