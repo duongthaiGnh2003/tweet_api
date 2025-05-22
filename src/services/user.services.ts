@@ -121,7 +121,7 @@ class UsersService {
     if (!userInfo.email_verified) {
       throw new ErrorWithStatus({
         message: 'Email not verified',
-        status: HTTP_STATUS.BADREQUEST
+        status: HTTP_STATUS.BAD_REQUEST
       })
     }
     const user = await databaseService.users.findOne({
@@ -154,31 +154,34 @@ class UsersService {
     }
   }
 
-  async refreshToken(refresh_token: string) {
+  async refreshToken({
+    userId,
+    verify,
+    refresh_token
+  }: {
+    userId: string
+    verify: UserVerifyStatus
+    refresh_token: string
+  }) {
     try {
-      // 1. Xác minh token (giả sử bạn dùng JWT)
-      const payload = await verifyToken({
-        token: refresh_token,
-        secretOrPublicKey: process.env.JWT_SECRET_REFRESH_TOKEN as string
-      })
-      const userId = payload?.userId
-
-      // 2. Kiểm tra token có tồn tại trong DB không
-      const tokenInDb = await databaseService.refreshTokens.findOne({
+      await databaseService.refreshTokens.deleteOne({
         token: refresh_token,
         user_id: new ObjectId(userId)
       })
 
-      if (!tokenInDb) {
-        throw new Error('Refresh token không hợp lệ hoặc đã bị thu hồi')
-      }
-
-      const newAccessToken = await this.signAccessToken({ userId, verify: payload.verify })
+      const [newAccessToken, newRefreshsToken] = await Promise.all([
+        this.signAccessToken({ userId, verify: verify }),
+        this.signRefreshToken({ userId, verify: verify })
+      ])
+      await databaseService.refreshTokens.insertOne(
+        new RefreshToken({ token: newRefreshsToken, user_id: new ObjectId(userId) })
+      )
 
       // 5. Trả về token mới
       return {
         message: 'Token refreshed successfully',
-        accessToken: newAccessToken
+        accessToken: newAccessToken,
+        refreshToken: newRefreshsToken
       }
     } catch (err) {
       throw new Error('Token không hợp lệ hoặc đã hết hạn')
