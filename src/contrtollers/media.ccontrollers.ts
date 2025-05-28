@@ -54,7 +54,27 @@ export const staticGetFileController = (req: Request, res: Response) => {
   })
 }
 
-export const staticGetFileVideoController = (req: Request, res: Response) => {
+export const serveM3u8HLSController = (req: Request, res: Response) => {
+  const { id } = req.params
+  const realId = id.replace('m3us', '')
+  return res.sendFile(path.resolve(DIR_UPLOADS_VIDEO, id, 'master.m3u8'), (err) => {
+    if (err) {
+      res.status((err as any).status).send('file is not found')
+    }
+  })
+}
+
+export const serveSegmentHLSController = (req: Request, res: Response) => {
+  const { id, v, segment } = req.params
+
+  return res.sendFile(path.resolve(DIR_UPLOADS_VIDEO, id, v, segment), (err) => {
+    if (err) {
+      res.status((err as any).status).send('file is not found')
+    }
+  })
+}
+
+export const staticGetFileVideoStreamController = (req: Request, res: Response) => {
   const range = req.headers.range as string
   if (!range) {
     return res.status(HTTP_STATUS.BAD_REQUEST).send('Requires range header')

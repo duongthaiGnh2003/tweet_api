@@ -6,6 +6,7 @@ import defaultErrorHandler from './middlewares/error.middlewares'
 import { mediasRouter } from './routes/media.route'
 import { config } from 'dotenv'
 import { staticRouter } from './routes/static.routers'
+import cors from 'cors'
 
 config() // đọc file .env
 
@@ -15,6 +16,7 @@ databaseService.connect() // kết nối database
 const app = express()
 const upload = multer()
 
+app.use(cors())
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 // app.use(upload.any()) // đọc body req khi dùng form-data
