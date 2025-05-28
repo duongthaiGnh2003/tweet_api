@@ -1,6 +1,7 @@
 import { Request } from 'express'
 import formidable, { File } from 'formidable'
 import fs from 'fs'
+import { nanoid } from 'nanoid'
 
 import path from 'path'
 import { DIR_UPLOADS_VIDEO } from '~/constants/config'
@@ -45,9 +46,11 @@ export const handleUploadVideo = async (req: Request) => {
   const { mode } = req.query
 
   const isMutyplite = Number(mode) === ModeUploaldFile.mutyplite
-
+  const idName = nanoid(10)
+  const folderPath = path.resolve(DIR_UPLOADS_VIDEO, idName)
+  fs.mkdirSync(folderPath)
   const form = formidable({
-    uploadDir: DIR_UPLOADS_VIDEO,
+    uploadDir: folderPath,
     maxFiles: isMutyplite ? 5 : 1,
 
     maxFieldsSize: 30 * 1024 * 1024, // 30MB
@@ -58,6 +61,9 @@ export const handleUploadVideo = async (req: Request) => {
         form.emit('error' as any, new Error('Unsupported file type') as any)
       }
       return valid
+    },
+    filename() {
+      return idName
     }
   })
 
@@ -75,6 +81,8 @@ export const handleUploadVideo = async (req: Request) => {
       videos.forEach((video) => {
         const ext = getExtention(video.originalFilename as string)
         fs.renameSync(video.filepath, video.filepath + '.' + ext)
+        video.newFilename = video.newFilename + '.' + ext // Update newFilename to include the extension
+        video.filepath = video.filepath + '.' + ext
       })
 
       resolve(files?.video as File[])

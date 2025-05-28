@@ -27,10 +27,19 @@ export const uploadImageController = async (req: Request, res: Response) => {
 //   })
 // }
 export const uploadVideoController = async (req: Request, res: Response) => {
-  const data = await mediaService.uploadVideo(req)
+  const data = await mediaService.uploadVideoService(req)
 
   res.json({
     message: ' upload is success ',
+    data: data
+  })
+}
+
+export const uploadVideoHLSController = async (req: Request, res: Response) => {
+  const data = await mediaService.uploadVideoHLSService(req)
+
+  res.json({
+    message: ' upload is success ddd ',
     data: data
   })
 }

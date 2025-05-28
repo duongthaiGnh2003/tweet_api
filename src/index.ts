@@ -17,7 +17,7 @@ const upload = multer()
 
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
-app.use(upload.none()) // đọc body req khi dùng form-data
+// app.use(upload.any()) // đọc body req khi dùng form-data
 
 app.get('/', (req, res) => {
   res.send('Hello, World!')
