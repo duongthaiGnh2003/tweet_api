@@ -15,3 +15,10 @@ export enum ModeUploaldFile {
   single,
   mutyplite
 }
+
+export enum EncodingStatus {
+  Pending,
+  Processing,
+  Success,
+  Failed
+}

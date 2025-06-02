@@ -115,3 +115,13 @@ export const staticGetFileVideoStreamController = (req: Request, res: Response) 
   const videoStream = fs.createReadStream(videoPath, { start, end })
   videoStream.pipe(res)
 }
+
+export const videotatusController = async (req: Request, res: Response) => {
+  const { id } = req.params
+  const data = await mediaService.getVideoStatusService(id)
+
+  res.json({
+    message: 'get video status success ',
+    data: data
+  })
+}

@@ -3,6 +3,7 @@ import dotenv from 'dotenv'
 import { User } from '~/models/schemas/User.schema'
 import RefreshToken from '~/models/schemas/RefreshToken.schema'
 import Follower from '~/models/schemas/Follower.schema'
+import VideoStatus from '~/models/schemas/VideoStatus.schema'
 
 dotenv.config()
 
@@ -26,6 +27,10 @@ class DatabaseService {
       // await this.client.close()
     }
   }
+  indexUsers() {
+    this.users.createIndex({ email: 1, password: 1 }) // index db để có thể tìm kiếm nhanh hơn tăng hiệu xuất sử lý
+    this.users.createIndex({ email: 1 }, { unique: true })
+  }
 
   get users(): Collection<User> {
     return this.db.collection('users')
@@ -35,6 +40,9 @@ class DatabaseService {
   }
   get followers(): Collection<Follower> {
     return this.db.collection('followers')
+  }
+  get videoStatus(): Collection<VideoStatus> {
+    return this.db.collection('videoStatus')
   }
 }
 

@@ -2,7 +2,8 @@ import { Router } from 'express'
 import {
   uploadImageController,
   uploadVideoController,
-  uploadVideoHLSController
+  uploadVideoHLSController,
+  videotatusController
 } from '~/contrtollers/media.ccontrollers'
 import { accessTokenValidator } from '~/middlewares/user.middlewares'
 import CustomFileImg from '~/utils/customFileImg'
@@ -12,4 +13,5 @@ export const mediasRouter = Router()
 // mediasRouter.post('/upload-image', CustomFileImg().single('file'), uploadSingleImageController)
 mediasRouter.post('/upload-image', accessTokenValidator, wrapRequestHandler(uploadImageController))
 mediasRouter.post('/upload-video', accessTokenValidator, wrapRequestHandler(uploadVideoController))
-mediasRouter.post('/upload-video-hsl', uploadVideoHLSController)
+mediasRouter.post('/upload-video-hsl', wrapRequestHandler(uploadVideoHLSController))
+mediasRouter.get('/video-status/:id', wrapRequestHandler(videotatusController))
