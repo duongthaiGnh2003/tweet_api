@@ -23,7 +23,14 @@ class UsersService {
     })
   }
 
-  private signRefreshToken({ userId, verify }: { userId: string; verify: UserVerifyStatus }) {
+  private signRefreshToken({ userId, verify, exp }: { userId: string; verify: UserVerifyStatus; exp?: number }) {
+    if (exp) {
+      return signToken({
+        payload: { userId, verify, token_type: TokenType.RefreshToken, exp },
+
+        privateKey: process.env.JWT_SECRET_REFRESH_TOKEN as string
+      })
+    }
     return signToken({
       payload: { userId, verify, token_type: TokenType.RefreshToken },
       options: { expiresIn: process.env.REFESH_TOKEN_EXPIRES_IN as SignOptions['expiresIn'] },
@@ -72,6 +79,13 @@ class UsersService {
     return data as userinfoGoogleOauth
   }
 
+  private decodeRefreshToken(refresh_token: string) {
+    return verifyToken({
+      token: refresh_token,
+      secretOrPublicKey: process.env.JWT_SECRET_REFRESH_TOKEN as string
+    })
+  }
+
   async register(payload: registerRequestBody) {
     const user_id = new ObjectId()
     const emailVerifyToken = await this.signEmailVerifyToken(user_id.toString())
@@ -94,9 +108,10 @@ class UsersService {
     // tương tự như vậy
     //     const accessToken = await this.signAccessToken({userId:user_id.toString(),verify:UserVerifyStatus.Unverified})
     // const refreshToken = await this.signRefreshToken({userId:user_id.toString(),verify:UserVerifyStatus.Unverified})
-
+    const { iat, exp } = await this.decodeRefreshToken(refreshToken)
+    console.log(iat, exp)
     await databaseService.refreshTokens.insertOne(
-      new RefreshToken({ token: refreshToken, user_id: new ObjectId(user_id.toString()) })
+      new RefreshToken({ token: refreshToken, user_id: new ObjectId(user_id.toString()), iat, exp })
     )
 
     return { accessToken, refreshToken }
@@ -107,9 +122,11 @@ class UsersService {
       this.signAccessToken({ userId, verify }),
       this.signRefreshToken({ userId, verify })
     ])
+    const { iat, exp } = await this.decodeRefreshToken(refreshToken)
+
     // delete old refresh token and insert new one
     await databaseService.refreshTokens.insertOne(
-      new RefreshToken({ token: refreshToken, user_id: new ObjectId(userId) })
+      new RefreshToken({ token: refreshToken, user_id: new ObjectId(userId), iat, exp })
     )
 
     return { accessToken, refreshToken }
@@ -157,11 +174,13 @@ class UsersService {
   async refreshToken({
     userId,
     verify,
-    refresh_token
+    refresh_token,
+    exp
   }: {
     userId: string
     verify: UserVerifyStatus
     refresh_token: string
+    exp: number
   }) {
     try {
       await databaseService.refreshTokens.deleteOne({
@@ -171,10 +190,18 @@ class UsersService {
 
       const [newAccessToken, newRefreshsToken] = await Promise.all([
         this.signAccessToken({ userId, verify: verify }),
-        this.signRefreshToken({ userId, verify: verify })
+        this.signRefreshToken({ userId, verify: verify, exp: exp })
       ])
+
+      const decodeRefreshToken = await this.decodeRefreshToken(newRefreshsToken)
+
       await databaseService.refreshTokens.insertOne(
-        new RefreshToken({ token: newRefreshsToken, user_id: new ObjectId(userId) })
+        new RefreshToken({
+          token: newRefreshsToken,
+          user_id: new ObjectId(userId),
+          iat: decodeRefreshToken.iat,
+          exp: decodeRefreshToken.exp
+        })
       )
 
       // 5. Trả về token mới
@@ -195,8 +222,10 @@ class UsersService {
     )
     const accessToken = await this.signAccessToken({ userId, verify: UserVerifyStatus.Verified })
     const refreshToken = await this.signRefreshToken({ userId, verify: UserVerifyStatus.Verified })
+    const { iat, exp } = await this.decodeRefreshToken(refreshToken)
+
     await databaseService.refreshTokens.insertOne(
-      new RefreshToken({ token: refreshToken, user_id: new ObjectId(userId) })
+      new RefreshToken({ token: refreshToken, user_id: new ObjectId(userId), iat, exp })
     )
     return { message: 'Email verified successfully', accessToken, refreshToken }
   }
