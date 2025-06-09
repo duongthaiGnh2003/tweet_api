@@ -27,9 +27,41 @@ class DatabaseService {
       // await this.client.close()
     }
   }
-  indexUsers() {
-    this.users.createIndex({ email: 1, password: 1 }) // index db để có thể tìm kiếm nhanh hơn tăng hiệu xuất sử lý
-    this.users.createIndex({ email: 1 }, { unique: true })
+  async indexUsers() {
+    const exists = await this.users.indexExists(['email_1_password_1', 'email_1', 'username_1'])
+
+    if (!exists) {
+      this.users.createIndex({ email: 1, password: 1 }) // index db để có thể tìm kiếm nhanh hơn tăng hiệu xuất sử lý
+      this.users.createIndex({ email: 1 }, { unique: true })
+      this.users.createIndex({ username: 1 }, { unique: true })
+    }
+  }
+  async indexRefreshToken() {
+    const exists = await this.users.indexExists(['exp_1', 'token_1'])
+
+    if (!exists) {
+      this.refreshTokens.createIndex({ token: 1 })
+      this.refreshTokens.createIndex(
+        { exp: 1 },
+        {
+          expireAfterSeconds: 0
+        }
+      ) // khi  mà cái exp này hết hạn thì cái mongo sẽ tự xóa nó khỏi database
+    }
+  }
+  async indexVideoStatus() {
+    const exists = await this.users.indexExists(['namne_1'])
+
+    if (!exists) {
+      this.videoStatus.createIndex({ namne: 1 })
+    }
+  }
+  async indexFollowers() {
+    const exists = await this.users.indexExists(['user_id_1_follower_user_id_1'])
+
+    if (!exists) {
+      this.followers.createIndex({ user_id: 1, follower_user_id: 1 })
+    }
   }
 
   get users(): Collection<User> {
