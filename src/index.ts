@@ -10,6 +10,7 @@ import cors from 'cors'
 import usersRouter from './routes/users.routes'
 import tweetRouter from './routes/tweet.routes'
 import bookmarksRoutes from './routes/bookmarks.routes'
+import likesRouter from './routes/likes.routes'
 
 config() // đọc file .env
 
@@ -38,6 +39,7 @@ app.use('/medias', mediasRouter)
 app.use('/static', staticRouter)
 app.use('/tweet', tweetRouter)
 app.use('/bookmarks', bookmarksRoutes)
+app.use('/likes', likesRouter)
 
 // err handler middleware sử dụng để bắt lỗi từ các middleware khác
 app.use(defaultErrorHandler as express.ErrorRequestHandler)
