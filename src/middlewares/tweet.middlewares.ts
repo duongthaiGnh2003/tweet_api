@@ -2,6 +2,8 @@ import { checkSchema } from 'express-validator'
 import { isEmpty } from 'lodash'
 import { ObjectId } from 'mongodb'
 import { MediaType, TweetAudience, TweetType } from '~/constants/enums'
+import { ErrorWithStatus } from '~/models/Errors'
+import databaseService from '~/services/database.services'
 import { numberEnumToArray } from '~/utils/common'
 import { validate } from '~/utils/validator'
 
@@ -105,6 +107,25 @@ export const createTweetValidation = validate(
             })
           ) {
             throw new Error('medias must be an array of media objects')
+          }
+          return true
+        }
+      }
+    }
+  })
+)
+export const tweetIdValidator = validate(
+  checkSchema({
+    tweet_id: {
+      isString: true,
+      custom: {
+        options: async (value, { req }) => {
+          const tweet = await databaseService.tweets.findOne({
+            _id: new ObjectId(value)
+          })
+          console.log('FFF', tweet)
+          if (!tweet) {
+            throw new ErrorWithStatus({ status: 404, message: 'Tweet is not found' })
           }
           return true
         }

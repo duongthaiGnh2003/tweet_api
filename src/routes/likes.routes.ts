@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { LikeController, unLikeController } from '~/contrtollers/likes.controllers'
-import { tweetIdValidator } from '~/middlewares/likes.middlewares'
+import { tweetIdValidator } from '~/middlewares/tweet.middlewares'
 import { accessTokenValidator } from '~/middlewares/user.middlewares'
 import { wrapRequestHandler } from '~/utils/handelers'
 
