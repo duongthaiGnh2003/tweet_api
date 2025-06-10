@@ -6,6 +6,7 @@ import Follower from '~/models/schemas/Follower.schema'
 import VideoStatus from '~/models/schemas/VideoStatus.schema'
 import { Tweet } from '~/models/schemas/Tweet.schema'
 import Hashtag from '~/models/schemas/Hashtag.schema'
+import Bookmarks from '~/models/schemas/Bookmarks.schema'
 
 dotenv.config()
 
@@ -83,6 +84,9 @@ class DatabaseService {
   }
   get hashtags(): Collection<Hashtag> {
     return this.db.collection('hashtags')
+  }
+  get bookmarks(): Collection<Bookmarks> {
+    return this.db.collection('bookmarks')
   }
 }
 
