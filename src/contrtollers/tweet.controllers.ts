@@ -23,9 +23,26 @@ export const getTweetController = async (req: Request<ParamsDictionary, any, Twe
     guest_views: result?.guest_views,
     user_views: result?.user_views
   }
-  console.log('GGGGGGGGG', tweet)
+
   res.json({
     message: 'Tweet created successfully',
     data: tweet
+  })
+}
+
+export const getTweetChildrenController = async (
+  req: Request<ParamsDictionary, any, TweetRequestBody>,
+  res: Response
+) => {
+  const result = await tweetService.getTweetChildrenservice({
+    tweet_id: req.params.tweet_id,
+    tweet_type: Number(req.query.tweet_type),
+    limit: Number(req.query.limit),
+    page: Number(req.query.page)
+  })
+
+  res.json({
+    message: 'Tweet created successfully',
+    data: result
   })
 }
