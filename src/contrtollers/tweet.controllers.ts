@@ -5,11 +5,27 @@ import { TokenPayload } from '~/models/requests/User.requests'
 import tweetService from '~/services/tweet.services'
 
 export const createTweetController = async (req: Request<ParamsDictionary, any, TweetRequestBody>, res: Response) => {
-  const { user_id } = req.decoded_authorization as TokenPayload
-  const result = await tweetService.createTweet(user_id, req.body)
+  const { userId } = req.decoded_authorization as TokenPayload
+
+  const result = await tweetService.createTweet(userId, req.body)
 
   res.json({
     message: 'Tweet created successfully',
     data: result
+  })
+}
+
+export const getTweetController = async (req: Request<ParamsDictionary, any, TweetRequestBody>, res: Response) => {
+  const { userId } = req.decoded_authorization as TokenPayload
+  const result = await tweetService.increaseView(req.params.tweet_id, userId)
+  const tweet = {
+    ...req.tweet,
+    guest_views: result?.guest_views,
+    user_views: result?.user_views
+  }
+  console.log('GGGGGGGGG', tweet)
+  res.json({
+    message: 'Tweet created successfully',
+    data: tweet
   })
 }

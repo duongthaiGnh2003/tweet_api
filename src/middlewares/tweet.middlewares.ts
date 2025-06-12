@@ -1,10 +1,15 @@
+import { NextFunction, Request, Response } from 'express'
 import { checkSchema } from 'express-validator'
 import { isEmpty } from 'lodash'
 import { ObjectId } from 'mongodb'
-import { MediaType, TweetAudience, TweetType } from '~/constants/enums'
+import { MediaType, TweetAudience, TweetType, UserVerifyStatus } from '~/constants/enums'
+import HTTP_STATUS from '~/constants/httpstatus'
 import { ErrorWithStatus } from '~/models/Errors'
+import { TokenPayload } from '~/models/requests/User.requests'
+import { Tweet } from '~/models/schemas/Tweet.schema'
 import databaseService from '~/services/database.services'
 import { numberEnumToArray } from '~/utils/common'
+import { wrapRequestHandler } from '~/utils/handelers'
 import { validate } from '~/utils/validator'
 
 const tweetTypes = numberEnumToArray(TweetType)
@@ -115,21 +120,148 @@ export const createTweetValidation = validate(
   })
 )
 export const tweetIdValidator = validate(
-  checkSchema({
-    tweet_id: {
-      isString: true,
-      custom: {
-        options: async (value, { req }) => {
-          const tweet = await databaseService.tweets.findOne({
-            _id: new ObjectId(value)
-          })
-          console.log('FFF', tweet)
-          if (!tweet) {
-            throw new ErrorWithStatus({ status: 404, message: 'Tweet is not found' })
+  checkSchema(
+    {
+      tweet_id: {
+        isString: true,
+        custom: {
+          options: async (value, { req }) => {
+            const [tweet] = await databaseService.tweets
+              .aggregate<Tweet>([
+                {
+                  $match: {
+                    _id: new ObjectId(value)
+                  }
+                },
+                {
+                  $lookup: {
+                    from: 'hashtags',
+                    localField: 'hashtags',
+                    foreignField: '_id',
+                    as: 'hashtags'
+                  }
+                },
+                {
+                  $lookup: {
+                    from: 'users',
+                    localField: 'mentions',
+                    foreignField: '_id',
+                    as: 'mentions'
+                  }
+                },
+                {
+                  $addFields: {
+                    mentions: {
+                      $map: {
+                        input: '$mentions',
+                        as: 'mention',
+                        in: {
+                          _id: '$mentions._id',
+                          name: '$mentions.name',
+                          username: '$mentions.username',
+                          email: '$mentions.email'
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  $lookup: {
+                    from: 'bookmarks',
+                    localField: '_id',
+                    foreignField: 'tweet_id',
+                    as: 'bookmarks'
+                  }
+                },
+                {
+                  $lookup: {
+                    from: 'likes',
+                    localField: '_id',
+                    foreignField: 'tweet_id',
+                    as: 'likes'
+                  }
+                },
+                {
+                  $lookup: {
+                    from: 'tweets',
+                    localField: '_id',
+                    foreignField: 'parent_id',
+                    as: 'tweet_childrents'
+                  }
+                },
+                {
+                  $addFields: {
+                    bookmarks: { $size: '$bookmarks' },
+                    likes: { $size: '$likes' },
+                    retweet_counts: {
+                      $size: {
+                        $filter: {
+                          input: '$tweet_childrents',
+                          as: 'item',
+                          cond: { $eq: ['$$item.type', 1] }
+                        }
+                      }
+                    },
+                    comment_counts: {
+                      $size: {
+                        $filter: {
+                          input: '$tweet_childrents',
+                          as: 'item',
+                          cond: { $eq: ['$$item.type', 2] }
+                        }
+                      }
+                    },
+                    quote_counts: {
+                      $size: {
+                        $filter: {
+                          input: '$tweet_childrents',
+                          as: 'item',
+                          cond: { $eq: ['$$item.type', 3] }
+                        }
+                      }
+                    }
+                  }
+                },
+                { $project: { tweet_childrents: 0 } }
+              ])
+              .toArray()
+
+            if (!tweet) {
+              throw new ErrorWithStatus({ status: 404, message: 'Tweet is not found' })
+            }
+            ;(req as Request).tweet = tweet //gan tweet vào req để sử dụng sau này
+            return true
           }
-          return true
         }
       }
-    }
-  })
+    },
+    ['body', 'params']
+  )
 )
+
+export const audienceValidator = wrapRequestHandler(async (req: Request, res: Response, next: NextFunction) => {
+  const tweet = req.tweet
+
+  if (tweet?.audience === TweetAudience.TwiterCircle) {
+    if (!req.decoded_authorization) {
+      throw new ErrorWithStatus({ status: HTTP_STATUS.UNAUTHORIZED, message: 'Unauthorized' })
+    }
+
+    const author = await databaseService.users.findOne({ _id: new ObjectId(tweet.user_id) })
+
+    if (!author || author.verify === UserVerifyStatus.Banned) {
+      throw new ErrorWithStatus({ status: HTTP_STATUS.NOT_FOUND, message: 'Author not found' })
+    }
+
+    // kiem tra xem người dùng có trong twitter circle của tác giả không
+    const { userId } = req.decoded_authorization as TokenPayload
+    const isInTwitterCircle = author.twitter_circle?.some((user_circle_id) => user_circle_id.equals(userId))
+    if (!isInTwitterCircle && !author._id.equals(userId)) {
+      throw new ErrorWithStatus({
+        status: HTTP_STATUS.FORBIDDEN,
+        message: 'tweet is not public'
+      })
+    }
+  }
+  next()
+})
