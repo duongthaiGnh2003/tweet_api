@@ -1,5 +1,6 @@
 import { TweetAudience, TweetType } from '~/constants/enums'
 import { Media } from '../Other'
+import { Query } from 'express-serve-static-core'
 
 export interface TweetRequestBody {
   type: TweetType
@@ -9,4 +10,10 @@ export interface TweetRequestBody {
   hashtags: string[] // tên cụm từ khóa
   mentions: string[] // user_id được nhắc đến
   medias: Media[]
+}
+
+export interface tweetQuery extends Query {
+  tweet_type: string
+  limit?: string
+  page?: string
 }

@@ -3,7 +3,7 @@ import databaseService from './database.services'
 import { Tweet } from '~/models/schemas/Tweet.schema'
 import { ObjectId, WithId } from 'mongodb'
 import Hashtag from '~/models/schemas/Hashtag.schema'
-import { has } from 'lodash'
+import { has, update } from 'lodash'
 import { TweetType } from '~/constants/enums'
 
 class TweetService {
@@ -61,7 +61,8 @@ class TweetService {
         returnDocument: 'after',
         projection: {
           user_views: 1,
-          guest_views: 1
+          guest_views: 1,
+          updated_at: 1
         }
       }
     )
@@ -70,11 +71,13 @@ class TweetService {
   }
 
   async getTweetChildrenservice({
+    user_id,
     tweet_id,
     tweet_type,
     limit,
     page
   }: {
+    user_id?: string
     tweet_id: string
     tweet_type: TweetType
     limit: number
@@ -184,9 +187,6 @@ class TweetService {
                   }
                 }
               }
-            },
-            views: {
-              $add: ['$guest_views', '$user_views']
             }
           }
         },
@@ -204,10 +204,34 @@ class TweetService {
       ])
       .toArray()
 
+    const ids = tweetChildren.map((item) => item._id as ObjectId)
+    const inc = user_id ? { user_views: 1 } : { guest_views: 1 }
+    const date = new Date()
+
+    await databaseService.tweets.updateMany(
+      { _id: { $in: ids } },
+      {
+        $inc: inc,
+        $set: {
+          updated_at: date
+        }
+      }
+    )
+
     const total = await databaseService.tweets.countDocuments({
       parent_id: new ObjectId(tweet_id),
       type: tweet_type
     })
+
+    tweetChildren.forEach((tweet) => {
+      tweet.updated_at = date
+      if (user_id) {
+        tweet.user_views += 1
+      } else {
+        tweet.guest_views += 1
+      }
+    })
+
     return {
       tweetChildren,
       page,

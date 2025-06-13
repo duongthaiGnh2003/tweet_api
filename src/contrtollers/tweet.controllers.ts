@@ -1,6 +1,7 @@
 import { Request, Response } from 'express'
 import { ParamsDictionary } from 'express-serve-static-core'
-import { TweetRequestBody } from '~/models/requests/Tweet.request'
+import { update } from 'lodash'
+import { tweetQuery, TweetRequestBody } from '~/models/requests/Tweet.request'
 import { TokenPayload } from '~/models/requests/User.requests'
 import tweetService from '~/services/tweet.services'
 
@@ -21,7 +22,8 @@ export const getTweetController = async (req: Request<ParamsDictionary, any, Twe
   const tweet = {
     ...req.tweet,
     guest_views: result?.guest_views,
-    user_views: result?.user_views
+    user_views: result?.user_views,
+    updated_at: result?.updated_at
   }
 
   res.json({
@@ -31,10 +33,13 @@ export const getTweetController = async (req: Request<ParamsDictionary, any, Twe
 }
 
 export const getTweetChildrenController = async (
-  req: Request<ParamsDictionary, any, TweetRequestBody>,
+  req: Request<ParamsDictionary, any, any, tweetQuery>,
   res: Response
 ) => {
+  const { userId } = req.decoded_authorization as TokenPayload
+
   const result = await tweetService.getTweetChildrenservice({
+    user_id: userId,
     tweet_id: req.params.tweet_id,
     tweet_type: Number(req.query.tweet_type),
     limit: Number(req.query.limit),

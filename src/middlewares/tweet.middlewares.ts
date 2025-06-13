@@ -265,3 +265,44 @@ export const audienceValidator = wrapRequestHandler(async (req: Request, res: Re
   }
   next()
 })
+
+export const getChildrenValidator = validate(
+  checkSchema(
+    {
+      tweet_id: {
+        isString: true,
+        custom: {
+          options: async (value, { req }) => {
+            const tweet = await databaseService.tweets.findOne({ _id: new ObjectId(value) })
+            if (!tweet) {
+              throw new ErrorWithStatus({ status: 404, message: 'Tweet not found' })
+            }
+            return true
+          }
+        }
+      },
+      tweet_type: {
+        isIn: {
+          options: [tweetTypes],
+          errorMessage: 'tweet_type is not valid'
+        }
+      },
+      limit: {
+        isNumeric: true,
+        custom: {
+          options: async (values, { req }) => {
+            const num = Number(values)
+            if (num > 100) {
+              throw new Error('maximum is 100')
+            }
+            return true
+          }
+        }
+      },
+      page: {
+        isNumeric: true
+      }
+    },
+    ['query', 'params']
+  )
+)
