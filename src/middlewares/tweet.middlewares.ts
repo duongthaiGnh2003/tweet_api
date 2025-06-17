@@ -286,7 +286,15 @@ export const getChildrenValidator = validate(
           options: [tweetTypes],
           errorMessage: 'tweet_type is not valid'
         }
-      },
+      }
+    },
+    ['query', 'params']
+  )
+)
+
+export const panigationValidator = validate(
+  checkSchema(
+    {
       limit: {
         isNumeric: true,
         custom: {
@@ -303,6 +311,6 @@ export const getChildrenValidator = validate(
         isNumeric: true
       }
     },
-    ['query', 'params']
+    ['query']
   )
 )

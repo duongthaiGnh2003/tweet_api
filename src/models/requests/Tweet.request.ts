@@ -12,8 +12,11 @@ export interface TweetRequestBody {
   medias: Media[]
 }
 
-export interface tweetQuery extends Query {
+export interface tweetQuery extends Pagination, Query {
   tweet_type: string
+}
+
+export interface Pagination {
   limit?: string
   page?: string
 }

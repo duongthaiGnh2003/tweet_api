@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
 import { ParamsDictionary } from 'express-serve-static-core'
 import { update } from 'lodash'
-import { tweetQuery, TweetRequestBody } from '~/models/requests/Tweet.request'
+import { Pagination, tweetQuery, TweetRequestBody } from '~/models/requests/Tweet.request'
 import { TokenPayload } from '~/models/requests/User.requests'
 import tweetService from '~/services/tweet.services'
 
@@ -48,6 +48,19 @@ export const getTweetChildrenController = async (
 
   res.json({
     message: 'Tweet created successfully',
+    data: result
+  })
+}
+
+export const getNewFeedsController = async (req: Request<ParamsDictionary, any, any, Pagination>, res: Response) => {
+  const { userId } = req.decoded_authorization as TokenPayload
+  const result = await tweetService.getNewFeedService({
+    user_id: userId,
+    limit: Number(req.query.limit),
+    page: Number(req.query.page)
+  })
+  res.json({
+    message: 'get new feed success',
     data: result
   })
 }
