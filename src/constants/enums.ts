@@ -16,8 +16,14 @@ export enum ModeUploaldFile {
   mutyplite
 }
 export enum MediaType {
-  video,
-  image
+  Image,
+  Video,
+  HLS
+}
+
+export enum MediaTypeQuery {
+  Image = 'image',
+  Video = 'video'
 }
 
 export enum EncodingStatus {
@@ -37,4 +43,9 @@ export enum TweetType {
 export enum TweetAudience {
   Everyone,
   TwiterCircle
+}
+
+export enum PeopleFollow {
+  Anyone = '0',
+  Following = '1'
 }

@@ -11,6 +11,7 @@ import usersRouter from './routes/users.routes'
 import tweetRouter from './routes/tweet.routes'
 import bookmarksRoutes from './routes/bookmarks.routes'
 import likesRouter from './routes/likes.routes'
+import searchRouter from './routes/search.routes'
 
 config() // đọc file .env
 
@@ -21,6 +22,7 @@ databaseService.connect().then(() => {
   databaseService.indexRefreshToken()
   databaseService.indexVideoStatus()
   databaseService.indexFollowers()
+  databaseService.indexTweets()
 }) // kết nối database
 const app = express()
 const upload = multer()
@@ -40,6 +42,7 @@ app.use('/static', staticRouter)
 app.use('/tweet', tweetRouter)
 app.use('/bookmarks', bookmarksRoutes)
 app.use('/likes', likesRouter)
+app.use('/search', searchRouter)
 
 // err handler middleware sử dụng để bắt lỗi từ các middleware khác
 app.use(defaultErrorHandler as express.ErrorRequestHandler)
