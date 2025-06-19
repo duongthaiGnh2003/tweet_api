@@ -87,56 +87,6 @@ type EncodeByResolution = {
     original: number
   }
 }
-const encodeMax144 = async ({
-  bitrate,
-  inputPath,
-  isHasAudio,
-  outputPath,
-  outputSegmentPath,
-  resolution
-}: EncodeByResolution) => {
-  const { $ } = await import('zx')
-  const slash = (await import('slash')).default
-
-  const args = ['-y', '-i', slash(inputPath), '-preset', 'veryslow', '-g', '48', '-crf', '23', '-sc_threshold', '0']
-  if (isHasAudio) {
-    args.push('-map', '0:0', '-map', '0:1')
-  } else {
-    args.push('-map', '0:0')
-  }
-  args.push(
-    '-s:v:0',
-    `${getWidth(144, resolution)}x144`,
-    '-c:v:0',
-    'libx264',
-    '-b:v:0',
-    `${bitrate[144]}`,
-    '-c:a',
-    'copy',
-    '-var_stream_map'
-  )
-  if (isHasAudio) {
-    args.push('v:0,a:0')
-  } else {
-    args.push('v:0')
-  }
-  args.push(
-    '-master_pl_name',
-    'master.m3u8',
-    '-f',
-    'hls',
-    '-hls_time',
-    '6',
-    '-hls_list_size',
-    '0',
-    '-hls_segment_filename',
-    slash(outputSegmentPath),
-    slash(outputPath)
-  )
-
-  await $`ffmpeg ${args}`
-  return true
-}
 
 const encodeMax360 = async ({
   bitrate,
@@ -148,19 +98,19 @@ const encodeMax360 = async ({
 }: EncodeByResolution) => {
   const { $ } = await import('zx')
   const slash = (await import('slash')).default
-  const videoResolutionVersionArgs = buildMultiResolutionEncodingArgs(bitrate, [144, 360], resolution)
+  const videoResolutionVersionArgs = buildMultiResolutionEncodingArgs(bitrate, [360], resolution) //[144, 360]
 
   const args = ['-y', '-i', slash(inputPath), '-preset', 'veryslow', '-g', '48', '-crf', '20', '-sc_threshold', '0']
   if (isHasAudio) {
-    args.push(...generateFfmpegMapArgs(2, ['-map', '0:0', '-map', '0:1']))
+    args.push(...generateFfmpegMapArgs(1, ['-map', '0:0', '-map', '0:1']))
   } else {
-    args.push(...generateFfmpegMapArgs(2, ['-map', '0:0']))
+    args.push(...generateFfmpegMapArgs(1, ['-map', '0:0']))
   }
   args.push(...videoResolutionVersionArgs, '-c:a', 'copy', '-var_stream_map')
   if (isHasAudio) {
-    args.push(generateVarStreamMap(2))
+    args.push(generateVarStreamMap(1))
   } else {
-    args.push(generateVarStreamMapVersion(2))
+    args.push(generateVarStreamMapVersion(1))
   }
   args.push(
     '-master_pl_name',
@@ -190,19 +140,19 @@ const encodeMax720 = async ({
 }: EncodeByResolution) => {
   const { $ } = await import('zx')
   const slash = (await import('slash')).default
-  const videoResolutionVersionArgs = buildMultiResolutionEncodingArgs(bitrate, [144, 360, 720], resolution)
+  const videoResolutionVersionArgs = buildMultiResolutionEncodingArgs(bitrate, [360, 720], resolution) //[144, 360, 720]
 
-  const args = ['-y', '-i', slash(inputPath), '-preset', 'veryslow', '-g', '48', '-crf', '17', '-sc_threshold', '0']
+  const args = ['-y', '-i', slash(inputPath), '-preset', 'veryslow', '-g', '48', '-crf', '23', '-sc_threshold', '0'] // crf, để 23 thay vì 17 là để cho nó giamnr bớt dung lượng file
   if (isHasAudio) {
-    args.push(...generateFfmpegMapArgs(3, ['-map', '0:0', '-map', '0:1']))
+    args.push(...generateFfmpegMapArgs(2, ['-map', '0:0', '-map', '0:1']))
   } else {
-    args.push(...generateFfmpegMapArgs(3, ['-map', '0:0']))
+    args.push(...generateFfmpegMapArgs(2, ['-map', '0:0']))
   }
   args.push(...videoResolutionVersionArgs, '-c:a', 'copy', '-var_stream_map')
   if (isHasAudio) {
-    args.push(generateVarStreamMap(3))
+    args.push(generateVarStreamMap(2))
   } else {
-    args.push(generateVarStreamMapVersion(3))
+    args.push(generateVarStreamMapVersion(2))
   }
   args.push(
     '-master_pl_name',
@@ -232,21 +182,21 @@ const encodeMax1080 = async ({
 }: EncodeByResolution) => {
   const { $ } = await import('zx')
   const slash = (await import('slash')).default
-  const videoResolutionVersionArgs = buildMultiResolutionEncodingArgs(bitrate, [144, 360, 720, 1080], resolution)
+  const videoResolutionVersionArgs = buildMultiResolutionEncodingArgs(bitrate, [360, 720, 1080], resolution)
 
-  const args = ['-y', '-i', slash(inputPath), '-preset', 'veryslow', '-g', '48', '-crf', '17', '-sc_threshold', '0']
+  const args = ['-y', '-i', slash(inputPath), '-preset', 'veryslow', '-g', '48', '-crf', '23', '-sc_threshold', '0']
   if (isHasAudio) {
-    args.push(...generateFfmpegMapArgs(4, ['-map', '0:0', '-map', '0:1']))
+    args.push(...generateFfmpegMapArgs(3, ['-map', '0:0', '-map', '0:1']))
   } else {
-    args.push(...generateFfmpegMapArgs(4, ['-map', '0:0']))
+    args.push(...generateFfmpegMapArgs(3, ['-map', '0:0']))
   }
 
   args.push(...videoResolutionVersionArgs, '-c:a', 'copy', '-var_stream_map')
   if (isHasAudio) {
-    args.push(generateVarStreamMap(4))
+    args.push(generateVarStreamMap(3))
     // nó tương ứng với số lần encode ra các chất lượng
   } else {
-    args.push(generateVarStreamMapVersion(4))
+    args.push(generateVarStreamMapVersion(3))
     //   // v:0 v:1 v:2 v:3
   }
   args.push(
@@ -277,19 +227,21 @@ const encodeMax1440 = async ({
 }: EncodeByResolution) => {
   const { $ } = await import('zx')
   const slash = (await import('slash')).default
-  const videoResolutionVersionArgs = buildMultiResolutionEncodingArgs(bitrate, [144, 360, 720, 1080, 1440], resolution)
+  const videoResolutionVersionArgs = buildMultiResolutionEncodingArgs(bitrate, [360, 720, 1080, 1440], resolution)
 
-  const args = ['-y', '-i', slash(inputPath), '-preset', 'veryslow', '-g', '48', '-crf', '17', '-sc_threshold', '0']
+  const args = ['-y', '-i', slash(inputPath), '-preset', 'veryslow', '-g', '48', '-crf', '23', '-sc_threshold', '0']
   if (isHasAudio) {
-    args.push(...generateFfmpegMapArgs(5, ['-map', '0:0', '-map', '0:1']))
+    args.push(...generateFfmpegMapArgs(4, ['-map', '0:0', '-map', '0:1']))
   } else {
-    args.push(...generateFfmpegMapArgs(5, ['-map', '0:0']))
+    args.push(...generateFfmpegMapArgs(4, ['-map', '0:0']))
   }
   args.push(...videoResolutionVersionArgs, '-c:a', 'copy', '-var_stream_map')
   if (isHasAudio) {
-    args.push(...generateFfmpegMapArgs(5, ['-map', '0:0', '-map', '0:1']))
+    args.push(generateVarStreamMap(4))
+    // nó tương ứng với số lần encode ra các chất lượng
   } else {
-    args.push(...generateFfmpegMapArgs(5, ['-map', '0:0']))
+    args.push(generateVarStreamMapVersion(4))
+    //   // v:0 v:1 v:2 v:3 v:4 v:5
   }
   args.push(
     '-master_pl_name',
@@ -320,7 +272,7 @@ const encodeMaxOriginal = async ({
   const { $ } = await import('zx')
   const slash = (await import('slash')).default
 
-  const args = ['-y', '-i', slash(inputPath), '-preset', 'veryslow', '-g', '48', '-crf', '17', '-sc_threshold', '0']
+  const args = ['-y', '-i', slash(inputPath), '-preset', 'veryslow', '-g', '48', '-crf', '23', '-sc_threshold', '0']
   if (isHasAudio) {
     args.push('-map', '0:0', '-map', '0:1', '-map', '0:0', '-map', '0:1', '-map', '0:0', '-map', '0:1')
   } else {
