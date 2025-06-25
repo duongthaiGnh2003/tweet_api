@@ -12,6 +12,7 @@ import tweetRouter from './routes/tweet.routes'
 import bookmarksRoutes from './routes/bookmarks.routes'
 import likesRouter from './routes/likes.routes'
 import searchRouter from './routes/search.routes'
+import './utils/cloudinary'
 
 config() // đọc file .env
 
@@ -30,7 +31,7 @@ const upload = multer()
 app.use(cors())
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
-app.use(upload.any()) // đọc body req khi dùng form-data
+// app.use(upload.any()) // đọc body req khi dùng form-data
 
 app.get('/', (req, res) => {
   res.send('Hello, World!')

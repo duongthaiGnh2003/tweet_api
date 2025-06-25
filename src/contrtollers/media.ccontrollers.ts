@@ -15,17 +15,22 @@ export const uploadImageController = async (req: Request, res: Response) => {
   })
 }
 
-// export const uploadSingleImageController = (req: Request, res: Response) => {
-//   if (!req.file) {
-//     res.status(400).json({
-//       message: 'No file uploaded'
-//     })
-//     return
-//   }
-//   res.json({
-//     message: 'upload success'
-//   })
-// }
+export const uploadImageToCloundinaryController = async (req: Request, res: Response) => {
+  const data = await mediaService.uploadImageToCloundinaryService(req)
+
+  res.json({
+    message: 'upload success',
+    data
+  })
+}
+export const uploadVideoToCloundinaryController = async (req: Request, res: Response) => {
+  const data = await mediaService.uploadVideoToCloundinaryService(req)
+
+  res.json({
+    message: 'upload success',
+    data
+  })
+}
 export const uploadVideoController = async (req: Request, res: Response) => {
   const data = await mediaService.uploadVideoService(req)
 
@@ -74,12 +79,15 @@ export const serveSegmentHLSController = (req: Request, res: Response) => {
   })
 }
 
-export const staticGetFileVideoStreamController = (req: Request, res: Response) => {
+export const staticGetFileVideoStreamController = (req: Request, res: Response): void => {
   const range = req.headers.range as string
   if (!range) {
-    return res.status(HTTP_STATUS.BAD_REQUEST).send('Requires range header')
+    res.status(HTTP_STATUS.BAD_REQUEST).send('Requires range header')
+    return
   }
+
   const { name } = req.params
+  console.log(name)
   const videoPath = path.resolve(DIR_UPLOADS_VIDEO, name)
 
   // 1MB = 10^6 bytes (Tính theo hệ 10, đây là thứ mà chúng ta hay thấy trên UI)

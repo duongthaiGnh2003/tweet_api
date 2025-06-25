@@ -2,12 +2,17 @@ import { Request } from 'express'
 import path from 'path'
 import sharp from 'sharp'
 import { DIR_UPLOADS_IMAGE, isProduction } from '~/constants/config'
-import { getNameFromFullName, handleUploadImage, handleUploadVideo } from '~/utils/file'
+import { getNameFromFullName, handleUploadImage, handleUploadVideo, handleUploadVideoToClound } from '~/utils/file'
 import { encodeHLSWithMultipleVideoStreams } from '~/utils/video'
 import fsPromise from 'fs/promises'
 import databaseService from './database.services'
 import VideoStatus from '~/models/schemas/VideoStatus.schema'
-import { EncodingStatus } from '~/constants/enums'
+import { EncodingStatus, ModeUploaldFile } from '~/constants/enums'
+import fs from 'fs/promises'
+import { v2 as cloudinary } from 'cloudinary'
+import { handleUploadImageToCloundinary } from '~/utils/fileMulter'
+import { ErrorWithStatus } from '~/models/Errors'
+import HTTP_STATUS from '~/constants/httpstatus'
 class Queue {
   items: string[]
   encoding: boolean
@@ -65,7 +70,6 @@ class Queue {
             }
           }
         )
-        console.log(`Encode video ${videoPath} success`)
       } catch (err) {
         await databaseService.videoStatus
           .updateOne(
@@ -95,8 +99,8 @@ class Queue {
 const queue = new Queue()
 class MediaService {
   async uploadMedia(req: Request) {
+    // luu vào ổ cứng local
     const files = await handleUploadImage(req)
-
     const data = await Promise.all(
       files.map(async (file, index) => {
         const newName = getNameFromFullName(file.newFilename)
@@ -112,6 +116,42 @@ class MediaService {
     )
 
     return data
+  }
+
+  async uploadImageToCloundinaryService(req: Request) {
+    try {
+      const files =
+        Number(req.query.mode) === ModeUploaldFile.single
+          ? ([req.file] as Express.Multer.File[])
+          : (req.files as Express.Multer.File[])
+
+      const uploadResults = await Promise.all(
+        files.map(async (file) => {
+          const compressedBuffer = await sharp(file.buffer) /// giảm dung lượng ảnh
+            .jpeg() // Optional: set quality
+            .toBuffer()
+
+          return new Promise((resolve, reject) => {
+            const stream = cloudinary.uploader.upload_stream(
+              {
+                folder: 'tweeter/images',
+                resource_type: 'image'
+              },
+              (error, result) => {
+                if (error) return reject(error)
+                resolve(result?.secure_url)
+              }
+            )
+
+            stream.end(compressedBuffer) // dùng buffer thay vì path
+          })
+        })
+      )
+
+      return uploadResults
+    } catch (error) {
+      throw new ErrorWithStatus({ status: HTTP_STATUS.INTERNAL_SERVER_ERROR, message: 'Upload failed' })
+    }
   }
   async uploadVideoService(req: Request) {
     const files = await handleUploadVideo(req)
@@ -142,7 +182,40 @@ class MediaService {
 
     return data
   }
+  async uploadVideoToCloundinaryService(req: Request) {
+    try {
+      const files =
+        Number(req.query.mode) === ModeUploaldFile.single
+          ? ([req.file] as Express.Multer.File[])
+          : (req.files as Express.Multer.File[])
+      const uploadResults = await Promise.all(
+        files.map((file) => {
+          return new Promise<string>((resolve, reject) => {
+            const stream = cloudinary.uploader.upload_stream(
+              {
+                folder: 'tweeter/videos',
+                resource_type: 'video'
+              },
+              (error, result) => {
+                if (error) return reject(error)
 
+                resolve(result?.playback_url as string)
+              }
+            )
+            stream.end(file.buffer)
+          })
+        })
+      )
+
+      return uploadResults // 👈 Trả về mảng URL của các video đã upload
+    } catch (error) {
+      console.log(error)
+      throw new ErrorWithStatus({
+        status: HTTP_STATUS.INTERNAL_SERVER_ERROR,
+        message: 'Upload failed'
+      })
+    }
+  }
   async getVideoStatusService(id: string) {
     const data = await databaseService.videoStatus.findOne({ name: id })
     return data

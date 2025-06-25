@@ -13,7 +13,7 @@ export const handleUploadImage = async (req: Request) => {
   const isMutyplite = Number(mode) === ModeUploaldFile.mutyplite
 
   const form = formidable({
-    uploadDir: path.resolve('uploads/images/temp'),
+    uploadDir: path.resolve('uploads/images/temp'), // tắt đi để nó không luu vào ổ cứng nũa mục tạm nữa
     maxFiles: isMutyplite ? 20 : 1,
     keepExtensions: true,
     maxFieldsSize: 3 * 1024 * 1024, // 3MB
@@ -49,6 +49,54 @@ export const handleUploadVideo = async (req: Request) => {
   const idName = nanoid(10)
   const folderPath = path.resolve(DIR_UPLOADS_VIDEO, idName)
   fs.mkdirSync(folderPath)
+  const form = formidable({
+    uploadDir: folderPath,
+    maxFiles: isMutyplite ? 5 : 1,
+
+    maxFieldsSize: 30 * 1024 * 1024, // 30MB
+    maxTotalFileSize: 30 * 1024 * 1024 * 5, //150
+    filter: function ({ name, originalFilename, mimetype }) {
+      const valid = name === 'video' && Boolean(mimetype?.includes('video/'))
+      if (!valid) {
+        form.emit('error' as any, new Error('Unsupported file type') as any)
+      }
+      return valid
+    },
+    filename() {
+      return idName
+    }
+  })
+
+  return new Promise<File[]>((resolve, reject) => {
+    form.parse(req, (err, fields, files) => {
+      if (err) {
+        return reject(err)
+      }
+
+      if (!Boolean(files?.video)) {
+        return reject(new Error('file is empty'))
+      }
+      const videos = files.video as File[]
+
+      videos.forEach((video) => {
+        const ext = getExtention(video.originalFilename as string)
+        fs.renameSync(video.filepath, video.filepath + '.' + ext)
+        video.newFilename = video.newFilename + '.' + ext // Update newFilename to include the extension
+        video.filepath = video.filepath + '.' + ext
+      })
+
+      resolve(files?.video as File[])
+    })
+  })
+}
+
+export const handleUploadVideoToClound = async (req: Request) => {
+  const { mode } = req.query
+
+  const isMutyplite = Number(mode) === ModeUploaldFile.mutyplite
+  const idName = nanoid(10)
+  const folderPath = path.resolve(DIR_UPLOADS_VIDEO)
+
   const form = formidable({
     uploadDir: folderPath,
     maxFiles: isMutyplite ? 5 : 1,
