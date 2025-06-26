@@ -3,8 +3,10 @@ import databaseService from './database.services'
 import { Tweet } from '~/models/schemas/Tweet.schema'
 import { ObjectId, WithId } from 'mongodb'
 import Hashtag from '~/models/schemas/Hashtag.schema'
-import { has, identity, update } from 'lodash'
 import { TweetType } from '~/constants/enums'
+import mediaService from './media.services'
+import { Request } from 'express'
+import { Media } from '~/models/Other'
 
 class TweetService {
   async checkendCreateHashtags(hashtags: string[]) {
@@ -27,8 +29,11 @@ class TweetService {
     return hashtagsDocuments.map((hashtag) => (hashtag as WithId<Hashtag>)?._id)
   }
 
-  async createTweet(user_id: string, body: TweetRequestBody) {
+  async createTweet(user_id: string, req: Request) {
+    const body = req.body as TweetRequestBody
     const hashtags = await this.checkendCreateHashtags(body.hashtags)
+
+    const resultUpload = await mediaService.uploadMediaToCloundinaryService(req)
 
     await databaseService.tweets.insertOne(
       new Tweet({
@@ -36,7 +41,7 @@ class TweetService {
         content: body.content,
         hashtags: hashtags,
         mentions: body.mentions,
-        medias: body.medias,
+        medias: (resultUpload as Media[]) || [],
         parent_id: body.parent_id,
         type: body.type,
         user_id: new ObjectId(user_id)

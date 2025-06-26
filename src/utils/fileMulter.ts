@@ -42,3 +42,21 @@ export function handleUploadVideoToCloundinary(req: Request) {
     }
   })
 }
+
+export function handleUploadMediaToCloundinary() {
+  return multer({
+    storage: memoryStorage(),
+    limits: {
+      fileSize: 20 * 1024 * 1024 // 20MB or 3MB per file
+    },
+
+    fileFilter: (req, file, cb: any) => {
+      const isImage = file.mimetype?.includes('video/') || file.mimetype?.includes('image/')
+
+      if (!isImage) {
+        cb(new Error('Unsupported file type'), false)
+      }
+      cb(null, true)
+    }
+  })
+}

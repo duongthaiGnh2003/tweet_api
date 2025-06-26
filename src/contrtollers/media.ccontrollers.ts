@@ -133,3 +133,12 @@ export const videotatusController = async (req: Request, res: Response) => {
     data: data
   })
 }
+
+export const uploadMediaToCloundinaryController = async (req: Request, res: Response) => {
+  const data = await mediaService.uploadMediaToCloundinaryService(req)
+
+  res.json({
+    message: 'upload success',
+    data
+  })
+}

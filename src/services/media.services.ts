@@ -7,7 +7,7 @@ import { encodeHLSWithMultipleVideoStreams } from '~/utils/video'
 import fsPromise from 'fs/promises'
 import databaseService from './database.services'
 import VideoStatus from '~/models/schemas/VideoStatus.schema'
-import { EncodingStatus, ModeUploaldFile } from '~/constants/enums'
+import { EncodingStatus, MediaType, ModeUploaldFile } from '~/constants/enums'
 import fs from 'fs/promises'
 import { v2 as cloudinary } from 'cloudinary'
 import { handleUploadImageToCloundinary } from '~/utils/fileMulter'
@@ -219,6 +219,59 @@ class MediaService {
   async getVideoStatusService(id: string) {
     const data = await databaseService.videoStatus.findOne({ name: id })
     return data
+  }
+
+  async uploadMediaToCloundinaryService(req: Request) {
+    try {
+      const files = req.files as Express.Multer.File[]
+
+      const uploadResults = await Promise.all(
+        files.map(async (file) => {
+          if (file.mimetype.includes('image/')) {
+            const compressedBuffer = await sharp(file.buffer) /// giảm dung lượng ảnh
+              .jpeg() // Optional: set quality
+              .toBuffer()
+
+            return new Promise<{ type: MediaType; url: string }>((resolve, reject) => {
+              const stream = cloudinary.uploader.upload_stream(
+                {
+                  folder: 'tweeter/images',
+                  resource_type: 'image'
+                },
+                (error, result) => {
+                  if (error) return reject(error)
+                  resolve({
+                    type: MediaType.Image,
+                    url: result?.secure_url as string
+                  })
+                }
+              )
+
+              stream.end(compressedBuffer) // dùng buffer thay vì path
+            })
+          } else if (file.mimetype.includes('video/')) {
+            return new Promise<{ type: MediaType; url: string }>((resolve, reject) => {
+              const stream = cloudinary.uploader.upload_stream(
+                {
+                  folder: 'tweeter/videos',
+                  resource_type: 'video'
+                },
+                (error, result) => {
+                  if (error) return reject(error)
+
+                  resolve({ type: MediaType.HLS, url: result?.playback_url })
+                }
+              )
+              stream.end(file.buffer)
+            })
+          }
+        })
+      )
+
+      return uploadResults
+    } catch (error) {
+      throw new ErrorWithStatus({ status: HTTP_STATUS.INTERNAL_SERVER_ERROR, message: 'Upload failed' })
+    }
   }
 }
 const mediaService = new MediaService()

@@ -3,13 +3,18 @@ import { ModeUploaldFile } from '~/constants/enums'
 import {
   uploadImageController,
   uploadImageToCloundinaryController,
+  uploadMediaToCloundinaryController,
   uploadVideoController,
   uploadVideoHLSController,
   uploadVideoToCloundinaryController,
   videotatusController
 } from '~/contrtollers/media.ccontrollers'
 import { accessTokenValidator } from '~/middlewares/user.middlewares'
-import { handleUploadImageToCloundinary, handleUploadVideoToCloundinary } from '~/utils/fileMulter'
+import {
+  handleUploadImageToCloundinary,
+  handleUploadMediaToCloundinary,
+  handleUploadVideoToCloundinary
+} from '~/utils/fileMulter'
 
 import { wrapRequestHandler } from '~/utils/handelers'
 
@@ -45,4 +50,13 @@ mediasRouter.post(
 
   accessTokenValidator,
   wrapRequestHandler(uploadVideoToCloundinaryController)
+)
+
+mediasRouter.post(
+  '/upload-media-clound',
+
+  handleUploadMediaToCloundinary().array('file', 10),
+
+  accessTokenValidator,
+  wrapRequestHandler(uploadMediaToCloundinaryController)
 )

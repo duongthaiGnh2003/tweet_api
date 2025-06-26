@@ -13,11 +13,18 @@ import {
   tweetIdValidator
 } from '~/middlewares/tweet.middlewares'
 import { accessTokenValidator, isUserLoggedInValidator, verifyUserValidator } from '~/middlewares/user.middlewares'
+import { handleUploadMediaToCloundinary } from '~/utils/fileMulter'
 import { wrapRequestHandler } from '~/utils/handelers'
 
 const tweetRouter = Router()
 
-tweetRouter.post('/', accessTokenValidator, createTweetValidation, wrapRequestHandler(createTweetController))
+tweetRouter.post(
+  '/',
+  accessTokenValidator,
+  createTweetValidation,
+  handleUploadMediaToCloundinary().array('file', 10),
+  wrapRequestHandler(createTweetController)
+)
 
 tweetRouter.get(
   '/:tweet_id',
