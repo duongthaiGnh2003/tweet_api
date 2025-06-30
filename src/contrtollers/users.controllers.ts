@@ -116,10 +116,10 @@ export const forgotPasswordController = async (
   res: Response
 ) => {
   const { user } = req as { user: User } // req.user được gán trong middleware
-  const result = await usersService.forgotPasswordService(user._id.toString())
+  console.log(user)
+  await usersService.forgotPasswordService(user)
   res.json({
-    message: 'forgot password success',
-    data: result
+    message: 'forgot password success'
   })
 }
 

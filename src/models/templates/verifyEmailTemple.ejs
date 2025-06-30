@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Xác minh email của bạn</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 0;
+      }
+      .container {
+        background-color: #ffffff;
+        max-width: 600px;
+        margin: 30px auto;
+        padding: 20px;
+        border-radius: 6px;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+      }
+      a.button {
+        display: inline-block;
+        padding: 12px 20px;
+        margin-top: 20px;
+        font-size: 16px;
+        color: #fff;
+        background-color: #007bff;
+        text-decoration: none;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Xin chào <%= name %></h1>
+      <p>
+        Cảm ơn bạn đã đăng ký tài khoản. Để hoàn tất quá trình đăng ký, vui lòng xác minh địa chỉ email của bạn bằng
+        cách nhấn nút bên dưới:
+      </p>
+      <a href="<%= verifyLink %>" class="button">Xác minh Email</a>
+      <p>Nếu bạn không yêu cầu xác minh, bạn có thể bỏ qua email này.</p>
+    </div>
+  </body>
+</html>

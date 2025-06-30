@@ -275,7 +275,12 @@ export const forgotPasswordValidator = validate(
       trim: true,
       custom: {
         options: async (value, { req }) => {
-          const user = await databaseService.users.findOne({ email: value })
+          const user = await databaseService.users.findOne(
+            { email: value },
+            {
+              projection: { password: 0, forgot_password_token: 0, email_verify_token: 0 }
+            }
+          )
           if (!user) {
             throw new ErrorWithStatus({
               message: USER_MESSAGE.USER_NOT_FOUND,

@@ -13,6 +13,7 @@ import { USER_MESSAGE } from '~/constants/message'
 import Follower from '~/models/schemas/Follower.schema'
 import axios from 'axios'
 import { verify } from 'crypto'
+import mailService from './mailService'
 
 class UsersService {
   private signAccessToken({ userId, verify }: { userId: string; verify: UserVerifyStatus }) {
@@ -109,7 +110,7 @@ class UsersService {
     //     const accessToken = await this.signAccessToken({userId:user_id.toString(),verify:UserVerifyStatus.Unverified})
     // const refreshToken = await this.signRefreshToken({userId:user_id.toString(),verify:UserVerifyStatus.Unverified})
     const { iat, exp } = await this.decodeRefreshToken(refreshToken)
-    console.log(iat, exp)
+
     await databaseService.refreshTokens.insertOne(
       new RefreshToken({ token: refreshToken, user_id: new ObjectId(user_id.toString()), iat, exp })
     )
@@ -232,21 +233,44 @@ class UsersService {
 
   async reSendVerifyEmail(userId: string) {
     const emailVerifyToken = await this.signEmailVerifyToken(userId)
-    await databaseService.users.findOneAndUpdate(
+    const user = await databaseService.users.findOneAndUpdate(
       { _id: new ObjectId(userId) },
-      { $set: { email_verify_token: emailVerifyToken, updated_at: new Date() } }
+      { $set: { email_verify_token: emailVerifyToken, updated_at: new Date() } },
+      {
+        returnDocument: 'after'
+      }
     )
+
+    await mailService.sendEmailToVerifyEmail({
+      to: user!.email,
+      subject: 'Verify email',
+      htmlFile: 'verifyEmailTemple.ejs',
+      data: {
+        name: user?.name,
+        verifyLink: `https://hdhjdh?email_verify_token=${emailVerifyToken}`
+      }
+    })
+
     return { message: 'Re-send verify email successfully' }
   }
 
-  async forgotPasswordService(userId: string) {
-    const forgotPasswordToken = await this.signForgotPasswordToken(userId)
+  async forgotPasswordService(user: User) {
+    console.log(user)
+    const forgotPasswordToken = await this.signForgotPasswordToken(user._id.toString())
 
     await databaseService.users.findOneAndUpdate(
-      { _id: new ObjectId(userId) },
+      { _id: new ObjectId(user._id) },
       { $set: { forgot_password_token: forgotPasswordToken, updated_at: new Date() } }
     )
-    return { forgotPasswordToken }
+    await mailService.sendEmailToVerifyEmail({
+      to: user.email,
+      subject: 'Forgot password',
+      htmlFile: 'forgotPasswordTemple.ejs',
+      data: {
+        name: user.name,
+        verifyLink: `https://hdhjdh?forgot_password_token=${forgotPasswordToken}`
+      }
+    })
   }
 
   async resetPasswordService(userId: string, password: string) {
