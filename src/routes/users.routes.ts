@@ -18,7 +18,7 @@ import {
   verifyEmailController
 } from '~/contrtollers/users.controllers'
 import {
-  accessTokenValidator,
+  accessTokenCookieValidator,
   changePasswordValidator,
   emailVerifyTokenValidator,
   forgotPasswordValidator,
@@ -36,11 +36,11 @@ const usersRouter = Router()
 
 usersRouter.post('/login', loginValidator, wrapRequestHandler(loginController))
 usersRouter.post('/register', registerValidator, wrapRequestHandler(registerController))
-usersRouter.post('/logout', accessTokenValidator, refreshTokenValidator, wrapRequestHandler(logoutController))
+usersRouter.post('/logout', accessTokenCookieValidator, refreshTokenValidator, wrapRequestHandler(logoutController))
 usersRouter.post('/refresh-token', refreshTokenValidator, wrapRequestHandler(refreshTokenController))
 
 usersRouter.post('/verify-email', emailVerifyTokenValidator, wrapRequestHandler(verifyEmailController))
-usersRouter.post('/resend-verify-email', accessTokenValidator, wrapRequestHandler(reSendVerifyEmailController))
+usersRouter.post('/resend-verify-email', accessTokenCookieValidator, wrapRequestHandler(reSendVerifyEmailController))
 usersRouter.post('/forgot-password', forgotPasswordValidator, wrapRequestHandler(forgotPasswordController))
 usersRouter.post(
   '/verify-forgot-password-token',
@@ -49,10 +49,10 @@ usersRouter.post(
 )
 
 usersRouter.post('/reset-password', resetPasswordValidator, wrapRequestHandler(resetPasswordController))
-usersRouter.get('/me', accessTokenValidator, wrapRequestHandler(getMeController))
+usersRouter.get('/me', accessTokenCookieValidator, wrapRequestHandler(getMeController))
 usersRouter.patch(
   '/me',
-  accessTokenValidator,
+  accessTokenCookieValidator,
   verifyUserValidator,
   updateMeValidator,
   wrapRequestHandler(updateMeController)
@@ -62,14 +62,14 @@ usersRouter.get('/:username', wrapRequestHandler(getProfileUserController))
 
 usersRouter.post(
   '/follow/:follow_User_Id',
-  accessTokenValidator,
+  accessTokenCookieValidator,
   verifyUserValidator,
   wrapRequestHandler(followUserController)
 )
 
 usersRouter.patch(
   '/change-password',
-  accessTokenValidator,
+  accessTokenCookieValidator,
   verifyUserValidator,
   changePasswordValidator,
   wrapRequestHandler(changePasswordController)

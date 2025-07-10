@@ -13,6 +13,7 @@ import bookmarksRoutes from './routes/bookmarks.routes'
 import likesRouter from './routes/likes.routes'
 import searchRouter from './routes/search.routes'
 import './utils/cloudinary'
+import cookieParser from 'cookie-parser'
 
 config() // đọc file .env
 
@@ -28,13 +29,19 @@ databaseService.connect().then(() => {
 const app = express()
 const upload = multer()
 
-app.use(cors())
+app.use(
+  cors({
+    origin: 'http://localhost:3000', // domain Next.js
+    credentials: true
+  })
+)
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(upload.any()) // đọc body req khi dùng form-data
+app.use(cookieParser())
 
 app.get('/', (req, res) => {
-  res.send('Hello, World!')
+  res.json('Hello, World!')
 })
 
 app.use('/users', usersRouter)

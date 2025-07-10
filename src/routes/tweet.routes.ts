@@ -12,7 +12,11 @@ import {
   panigationValidator,
   tweetIdValidator
 } from '~/middlewares/tweet.middlewares'
-import { accessTokenValidator, isUserLoggedInValidator, verifyUserValidator } from '~/middlewares/user.middlewares'
+import {
+  accessTokenCookieValidator,
+  isUserLoggedInValidator,
+  verifyUserValidator
+} from '~/middlewares/user.middlewares'
 import { handleUploadMediaToCloundinary } from '~/utils/fileMulter'
 import { wrapRequestHandler } from '~/utils/handelers'
 
@@ -20,7 +24,7 @@ const tweetRouter = Router()
 
 tweetRouter.post(
   '/',
-  accessTokenValidator,
+  accessTokenCookieValidator,
   createTweetValidation,
   handleUploadMediaToCloundinary().array('file', 10),
   wrapRequestHandler(createTweetController)
@@ -29,7 +33,7 @@ tweetRouter.post(
 tweetRouter.get(
   '/:tweet_id',
   tweetIdValidator,
-  isUserLoggedInValidator(accessTokenValidator),
+  isUserLoggedInValidator(accessTokenCookieValidator),
   isUserLoggedInValidator(verifyUserValidator),
   audienceValidator,
   wrapRequestHandler(getTweetController)
@@ -39,7 +43,7 @@ tweetRouter.get(
   '/:tweet_id/children',
   getChildrenValidator,
   panigationValidator,
-  isUserLoggedInValidator(accessTokenValidator),
+  isUserLoggedInValidator(accessTokenCookieValidator),
   isUserLoggedInValidator(verifyUserValidator),
   audienceValidator,
   wrapRequestHandler(getTweetChildrenController)
@@ -49,7 +53,7 @@ tweetRouter.get(
 tweetRouter.get(
   '/', //new-feeds
   panigationValidator,
-  accessTokenValidator,
+  accessTokenCookieValidator,
   verifyUserValidator,
   wrapRequestHandler(getNewFeedsController)
 )

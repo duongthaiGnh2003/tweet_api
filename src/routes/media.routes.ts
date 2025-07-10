@@ -9,7 +9,7 @@ import {
   uploadVideoToCloundinaryController,
   videotatusController
 } from '~/contrtollers/media.ccontrollers'
-import { accessTokenValidator } from '~/middlewares/user.middlewares'
+import { accessTokenCookieValidator } from '~/middlewares/user.middlewares'
 import {
   handleUploadImageToCloundinary,
   handleUploadMediaToCloundinary,
@@ -20,10 +20,10 @@ import { wrapRequestHandler } from '~/utils/handelers'
 
 export const mediasRouter = Router()
 // mediasRouter.post('/upload-image', CustomFileImg().single('file'), uploadSingleImageController)
-mediasRouter.post('/upload-image', accessTokenValidator, wrapRequestHandler(uploadImageController))
-mediasRouter.post('/upload-video', accessTokenValidator, wrapRequestHandler(uploadVideoController))
-mediasRouter.post('/upload-video-hsl', accessTokenValidator, wrapRequestHandler(uploadVideoHLSController))
-mediasRouter.get('/video-status/:id', accessTokenValidator, wrapRequestHandler(videotatusController))
+mediasRouter.post('/upload-image', accessTokenCookieValidator, wrapRequestHandler(uploadImageController))
+mediasRouter.post('/upload-video', accessTokenCookieValidator, wrapRequestHandler(uploadVideoController))
+mediasRouter.post('/upload-video-hsl', accessTokenCookieValidator, wrapRequestHandler(uploadVideoHLSController))
+mediasRouter.get('/video-status/:id', accessTokenCookieValidator, wrapRequestHandler(videotatusController))
 
 // ToCloundinary
 mediasRouter.post(
@@ -35,7 +35,7 @@ mediasRouter.post(
     middleware(req, res, next)
   },
 
-  accessTokenValidator,
+  accessTokenCookieValidator,
   wrapRequestHandler(uploadImageToCloundinaryController)
 )
 
@@ -48,7 +48,7 @@ mediasRouter.post(
     middleware(req, res, next)
   },
 
-  accessTokenValidator,
+  accessTokenCookieValidator,
   wrapRequestHandler(uploadVideoToCloundinaryController)
 )
 
@@ -57,6 +57,6 @@ mediasRouter.post(
 
   handleUploadMediaToCloundinary().array('file', 10),
 
-  accessTokenValidator,
+  accessTokenCookieValidator,
   wrapRequestHandler(uploadMediaToCloundinaryController)
 )

@@ -116,7 +116,7 @@ export const forgotPasswordController = async (
   res: Response
 ) => {
   const { user } = req as { user: User } // req.user được gán trong middleware
-  console.log(user)
+
   await usersService.forgotPasswordService(user)
   res.json({
     message: 'forgot password success'
@@ -205,6 +205,13 @@ export const oauthController = async (req: Request, res: Response) => {
   const result = await usersService.oauthService(code as string)
   const clientUrl = process.env.CLIENT_REDIRECT_URI as string
   const redirectUrl = `${clientUrl}?access_token=${result.accessToken}&refresh_token=${result.refreshToken}&new_user=${result.newUser}&verify=${result.verify}`
-
+  res.cookie('token', result.accessToken, {
+    // httpOnly: true,
+    secure: process.env.NODE_ENV === 'production' // Chỉ gửi cookie qua HTTPS trong môi trường production
+  })
+  res.cookie('refresh_token', result.refreshToken, {
+    // httpOnly: true,
+    secure: process.env.NODE_ENV === 'production'
+  })
   res.redirect(redirectUrl)
 }

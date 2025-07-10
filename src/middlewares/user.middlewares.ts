@@ -213,6 +213,29 @@ export const accessTokenValidator = validate(
     ['headers']
   )
 )
+export const accessTokenCookieValidator = async (req: Request, res: Response, next: NextFunction) => {
+  const token = req.cookies.token
+
+  if (!token) {
+    throw new ErrorWithStatus({ message: 'Access token is required in cookie', status: HTTP_STATUS.UNAUTHORIZED })
+  }
+
+  try {
+    const decoded_authorization = await verifyToken({
+      token,
+      secretOrPublicKey: process.env.JWT_SECRET_ACCESS_TOKEN as string
+    })
+    req.decoded_authorization = decoded_authorization
+    console.log(decoded_authorization)
+    // next()
+  } catch (err) {
+    throw new ErrorWithStatus({
+      message: (err as JsonWebTokenError).message,
+      status: HTTP_STATUS.UNAUTHORIZED
+    })
+  }
+  next()
+}
 
 export const refreshTokenValidator = validate(
   checkSchema(
